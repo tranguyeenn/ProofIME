@@ -8,19 +8,11 @@
 import Foundation
 
 struct SymbolEngine {
-	private let mappings: [String: String] = [
-		"fa": "∀",
-		"ex": "∃",
-		"inn": "∈",
-		"nin": "∉",
-		"RR": "ℝ",
-		"ZZ": "ℤ",
-		"QQ": "ℚ",
-		"NN": "ℕ",
-		"=>": "⇒",
-		"<=>": "⇔",
-		"there4": "∴"
-	]
+	private let mappings: [String: String]
+
+	init(mappings: [String: String] = SymbolLoader.loadMappings()) {
+		self.mappings = mappings
+	}
 
 	func transform(_ text: String) -> String {
 		var result = text
