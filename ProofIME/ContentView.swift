@@ -14,7 +14,9 @@ struct ContentView: View {
 	@State private var input = ""
 	@State private var mode: OutputMode = .unicode
 	@State private var referencePanel: ReferencePanel = .templates
+
 	@State private var customMappings: [String: String]? = nil
+	@State private var configReloadID = UUID()
 
 	private let templateEngine = TemplateEngine()
 
@@ -22,6 +24,7 @@ struct ContentView: View {
 		if let customMappings {
 			return SymbolEngine(unicodeMappings: customMappings)
 		}
+
 		return SymbolEngine()
 	}
 
@@ -61,12 +64,32 @@ struct ContentView: View {
 			.pickerStyle(.segmented)
 
 			HStack {
-				Button("Import JSON") {
-					importMappings()
-				}
+				Menu("Config") {
+					Button("Import JSON") {
+						importMappings()
+					}
 
-				Button("Reset") {
-					customMappings = nil
+					Button("Reload Config") {
+						reloadConfig()
+					}
+
+					Divider()
+
+					Button("Open Config Folder") {
+						AppConfig.openConfigDirectory()
+					}
+
+					Divider()
+
+					Button("Delete Custom Symbols") {
+						AppConfig.deleteUserSymbols()
+						reloadConfig()
+					}
+
+					Button("Delete Custom Templates") {
+						AppConfig.deleteUserTemplates()
+						reloadConfig()
+					}
 				}
 			}
 
@@ -124,6 +147,7 @@ struct ContentView: View {
 					}
 				}
 				.frame(height: 260)
+				.id(configReloadID)
 			} else {
 				Text("Available Symbols")
 					.font(.headline)
@@ -140,12 +164,18 @@ struct ContentView: View {
 					}
 				}
 				.frame(height: 260)
+				.id(configReloadID)
 			}
 
 			Spacer()
 		}
 		.padding()
-		.frame(width: 760, height: 680)
+		.frame(width: 760, height: 700)
+	}
+
+	private func reloadConfig() {
+		customMappings = nil
+		configReloadID = UUID()
 	}
 
 	private func copyOutput() {
@@ -187,6 +217,7 @@ struct ContentView: View {
 					.decode([String: String].self, from: data)
 
 				customMappings = mappings
+				configReloadID = UUID()
 			} catch {
 				print("Failed to import mappings:", error)
 			}

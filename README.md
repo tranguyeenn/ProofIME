@@ -1,95 +1,215 @@
 # ProofIME
 
-ProofIME is a macOS input method project for mathematical proof writing.
+ProofIME is a macOS application for writing mathematical proofs faster.
 
-Inspired by Vietnamese Telex, ProofIME converts shorthand notation into mathematical symbols, allowing users to write proofs more efficiently without searching for Unicode characters.
-
-## Example
-
-Input:
-
-```txt
-fa x inn RR => ex y inn ZZ
-```
-
-Output:
-
-```txt
-∀ x ∈ ℝ ⇒ ∃ y ∈ ℤ
-```
+Inspired by Vietnamese Telex input methods, ProofIME converts lightweight shorthand into Unicode mathematical notation and LaTeX expressions in real time. It is designed for students, mathematicians, and anyone tired of hunting through symbol menus while writing proofs.
 
 ## Features
 
-- Real-time mathematical symbol transformation
-- Configurable symbol mappings via JSON
-- Unicode proof notation support
-- SwiftUI desktop application
-- Modular transformation engine
+### Unicode Output
 
-## Project Structure
+Convert shorthand into mathematical symbols.
 
-```txt
-ProofIME
-├── ContentView.swift
-├── SymbolEngine.swift
-├── SymbolLoader.swift
-└── symbols.json
+| Input | Output |
+| ----- | ------ |
+| fa    | ∀      |
+| ex    | ∃      |
+| inn   | ∈      |
+| RR    | ℝ      |
+| ZZ    | ℤ      |
+| =>    | ⇒      |
+| <=>   | ⇔      |
+
+Example:
+
+```text
+fa x inn RR => ex y inn ZZ
 ```
 
-### Components
+becomes
 
-#### SymbolEngine
+```text
+∀ x ∈ ℝ ⇒ ∃ y ∈ ℤ
+```
 
-Responsible for transforming shorthand notation into mathematical symbols.
+---
 
-#### SymbolLoader
+### LaTeX Output
 
-Loads symbol mappings from a JSON configuration file.
+Generate LaTeX-ready notation from the same shorthand.
 
-#### symbols.json
+Example:
 
-Stores configurable symbol mappings.
+```text
+fa x inn RR => ex y inn ZZ
+```
+
+becomes
+
+```latex
+\forall x \in \mathbb{R} \Rightarrow \exists y \in \mathbb{Z}
+```
+
+---
+
+### Token-Based Parsing
+
+ProofIME uses token-based parsing rather than naive string replacement.
+
+This prevents accidental transformations such as:
+
+```text
+fax
+```
+
+becoming
+
+```text
+∀x
+```
+
+Only complete tokens are converted.
+
+---
+
+### Custom Symbol Mappings
+
+Import custom JSON configurations.
 
 Example:
 
 ```json
 {
-  "fa": "∀",
-  "ex": "∃",
-  "RR": "ℝ"
+  "qed": "∎",
+  "all": "∀",
+  "real": "ℝ"
 }
 ```
 
-## Current Status
+Users can define their own notation system without modifying source code.
+
+---
+
+### Proof Templates
+
+Generate common proof structures instantly.
+
+Available templates include:
+
+* Direct Proof
+* Contradiction
+* Contraposition
+* Induction
+* Universal Proofs
+* Existence Proofs
+* Existence & Uniqueness Proofs
+
+Example:
+
+```text
+/template contradiction
+```
+
+expands into a proof skeleton.
+
+---
+
+### Export Tools
+
+Export generated output as:
+
+* TXT
+* TEX
+
+or copy directly to the clipboard.
+
+---
+
+### User Configuration Folder
+
+ProofIME automatically loads user-defined configurations from:
+
+```text
+~/Library/Application Support/ProofIME/
+```
+
+Supported files:
+
+```text
+symbols.json
+proof_templates.json
+```
+
+No manual imports required.
+
+---
+
+## Technology
+
+* Swift
+* SwiftUI
+* Foundation
+* AppKit
+
+---
+
+## Motivation
+
+ProofIME began as an experiment inspired by Vietnamese Telex input methods.
+
+Vietnamese typists use short character sequences to generate accented letters efficiently. ProofIME applies the same idea to mathematical notation, allowing proofs to be written with simple, memorable shortcuts.
+
+Instead of:
+
+```text
+Insert Symbol
+→ Search Symbol
+→ Click Symbol
+```
+
+users can type:
+
+```text
+fa x inn RR
+```
+
+and immediately obtain:
+
+```text
+∀ x ∈ ℝ
+```
+
+---
+
+## Roadmap
 
 ### Completed
 
-- SwiftUI application setup
-- Symbol transformation engine
-- JSON configuration loader
-- Unicode symbol replacement
+* Unicode output
+* LaTeX output
+* JSON symbol mappings
+* Token-based parser
+* Proof templates
+* TXT/TEX export
+* User configuration folder
 
 ### Planned
 
-- Live symbol reference table
-- LaTeX output mode
-- User-defined mappings
-- macOS Input Method Editor (IME) integration
-- Telex-style typing experience
+* Keyboard shortcuts
+* Template editor
+* Symbol search
+* Menu bar integration
 
-## Inspiration
+### V1.0
 
-As a Vietnamese student, I regularly use the Telex input method to type Vietnamese characters efficiently.
+* Native macOS Input Method Editor (IME)
+* System-wide proof notation input
+* Works across any macOS application
 
-ProofIME applies the same concept to mathematical notation, transforming shorthand commands into proof symbols as the user types.
+---
 
-## Technologies
+## Author
 
-- Swift
-- SwiftUI
-- Foundation
-- JSON
+Trang Nguyen
 
-## License
-
-MIT License
+Computer Science + Mathematics @ Georgia State University

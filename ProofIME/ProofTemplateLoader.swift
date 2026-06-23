@@ -1,14 +1,14 @@
-//
-//  ProofTemplateLoader.swift
-//  ProofIME
-//
-//  Created by Trang Nguyen on 6/23/26.
-//
-
 import Foundation
 
 final class ProofTemplateLoader {
+
 	static func loadTemplates() -> [String: String] {
+		AppConfig.ensureConfigDirectoryExists()
+
+		if FileManager.default.fileExists(atPath: AppConfig.userTemplatesURL.path) {
+			return loadTemplates(from: AppConfig.userTemplatesURL)
+		}
+
 		guard let url = Bundle.main.url(
 			forResource: "proof_templates",
 			withExtension: "json"
@@ -17,6 +17,10 @@ final class ProofTemplateLoader {
 			return [:]
 		}
 
+		return loadTemplates(from: url)
+	}
+
+	private static func loadTemplates(from url: URL) -> [String: String] {
 		do {
 			let data = try Data(contentsOf: url)
 
@@ -35,14 +39,7 @@ final class ProofTemplateLoader {
 		let templates = loadTemplates()
 
 		return templates
-			.map {
-				ProofTemplate(
-					name: $0.key,
-					body: $0.value
-				)
-			}
-			.sorted {
-				$0.name < $1.name
-			}
+			.map { ProofTemplate(name: $0.key, body: $0.value) }
+			.sorted { $0.name < $1.name }
 	}
 }
