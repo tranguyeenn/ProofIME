@@ -8,7 +8,9 @@
 import Foundation
 
 final class SymbolLoader {
+
 	static func loadMappings() -> [String: String] {
+
 		guard let url = Bundle.main.url(
 			forResource: "symbols",
 			withExtension: "json"
@@ -24,10 +26,27 @@ final class SymbolLoader {
 				.decode([String: String].self, from: data)
 
 			print("Loaded mappings:", mappings.count)
+
 			return mappings
+
 		} catch {
 			print("Failed to load mappings:", error)
 			return [:]
 		}
+	}
+
+	static func loadSymbolList() -> [SymbolMapping] {
+		let mappings = loadMappings()
+
+		return mappings
+			.map {
+				SymbolMapping(
+					shortcut: $0.key,
+					symbol: $0.value
+				)
+			}
+			.sorted {
+				$0.shortcut < $1.shortcut
+			}
 	}
 }
