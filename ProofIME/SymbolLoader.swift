@@ -34,6 +34,51 @@ final class SymbolLoader {
 			return [:]
 		}
 	}
+	
+	static func loadLatexMappings() -> [String: String] {
+
+		[
+			"fa": "\\forall",
+			"ex": "\\exists",
+
+			"inn": "\\in",
+			"nin": "\\notin",
+
+			"RR": "\\mathbb{R}",
+			"ZZ": "\\mathbb{Z}",
+			"QQ": "\\mathbb{Q}",
+			"NN": "\\mathbb{N}",
+			"CC": "\\mathbb{C}",
+
+			"=>": "\\Rightarrow",
+			"<=>": "\\Leftrightarrow",
+
+			"andd": "\\land",
+			"orr": "\\lor",
+			"nott": "\\neg",
+
+			"sub": "\\subseteq",
+			"psub": "\\subset",
+
+			"empty": "\\emptyset",
+
+			"there4": "\\therefore",
+			"becuz": "\\because",
+
+			"!=": "\\neq",
+			">=": "\\geq",
+			"<=": "\\leq",
+
+			"equiv": "\\equiv",
+			"approx": "\\approx",
+
+			"eps": "\\epsilon",
+			"del": "\\delta",
+			"lam": "\\lambda",
+			"alp": "\\alpha",
+			"bet": "\\beta"
+		]
+	}
 
 	static func loadSymbolList() -> [SymbolMapping] {
 		let mappings = loadMappings()

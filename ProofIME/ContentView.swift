@@ -10,6 +10,7 @@ import SwiftUI
 struct ContentView: View {
 
 	@State private var input = ""
+	@State private var mode: OutputMode = .unicode
 
 	private let engine = SymbolEngine()
 	private let symbols = SymbolLoader.loadSymbolList()
@@ -20,6 +21,18 @@ struct ContentView: View {
 
 			Text("ProofIME")
 				.font(.largeTitle)
+
+			Picker(
+				"Mode",
+				selection: $mode
+			) {
+
+				ForEach(OutputMode.allCases) { mode in
+					Text(mode.rawValue)
+						.tag(mode)
+				}
+			}
+			.pickerStyle(.segmented)
 
 			TextField(
 				"Type: fa x inn RR => ex y inn ZZ",
@@ -32,8 +45,13 @@ struct ContentView: View {
 			Text("Output")
 				.font(.headline)
 
-			Text(engine.transform(input))
-				.font(.title2)
+			Text(
+				engine.transform(
+					input,
+					mode: mode
+				)
+			)
+			.font(.title2)
 
 			Divider()
 
@@ -61,7 +79,7 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-		.frame(width: 600, height: 500)
+		.frame(width: 650, height: 550)
 	}
 }
 

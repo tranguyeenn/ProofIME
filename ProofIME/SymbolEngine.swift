@@ -9,15 +9,26 @@ import Foundation
 
 struct SymbolEngine {
 
-	private let mappings: [String: String]
+	private let unicodeMappings: [String: String]
+	private let latexMappings: [String: String]
 
 	init(
-		mappings: [String: String] = SymbolLoader.loadMappings()
+		unicodeMappings: [String: String] = SymbolLoader.loadMappings(),
+		latexMappings: [String: String] = SymbolLoader.loadLatexMappings()
 	) {
-		self.mappings = mappings
+		self.unicodeMappings = unicodeMappings
+		self.latexMappings = latexMappings
 	}
 
-	func transform(_ text: String) -> String {
+	func transform(
+		_ text: String,
+		mode: OutputMode
+	) -> String {
+
+		let mappings =
+			mode == .unicode
+			? unicodeMappings
+			: latexMappings
 
 		var result = text
 
