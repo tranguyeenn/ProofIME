@@ -21,6 +21,11 @@
 			path = ProofIME;
 			sourceTree = "<group>";
 		};
+		40E648982FEB06FD006C371D /* screenshots */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = screenshots;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -40,6 +45,7 @@
 				40E6485E2FEAD1D5006C371D /* ProofIME */,
 				40E6485D2FEAD1D5006C371D /* Products */,
 				40E648732FEAD794006C371D /* README.md */,
+				40E648982FEB06FD006C371D /* screenshots */,
 			);
 			sourceTree = "<group>";
 		};
@@ -68,6 +74,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				40E6485E2FEAD1D5006C371D /* ProofIME */,
+				40E648982FEB06FD006C371D /* screenshots */,
 			);
 			name = ProofIME;
 			packageProductDependencies = (

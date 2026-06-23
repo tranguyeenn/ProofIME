@@ -209,15 +209,26 @@ struct ContentView: View {
 		panel.canChooseDirectories = false
 
 		if panel.runModal() == .OK,
-		   let url = panel.url {
+		   let sourceURL = panel.url {
+
 			do {
-				let data = try Data(contentsOf: url)
+				AppConfig.ensureConfigDirectoryExists()
 
-				let mappings = try JSONDecoder()
-					.decode([String: String].self, from: data)
+				let destinationURL = AppConfig.userSymbolsURL
 
-				customMappings = mappings
-				configReloadID = UUID()
+				if FileManager.default.fileExists(atPath: destinationURL.path) {
+					try FileManager.default.removeItem(at: destinationURL)
+				}
+
+				try FileManager.default.copyItem(
+					at: sourceURL,
+					to: destinationURL
+				)
+
+				print("Imported JSON to:", destinationURL.path)
+
+				reloadConfig()
+
 			} catch {
 				print("Failed to import mappings:", error)
 			}
