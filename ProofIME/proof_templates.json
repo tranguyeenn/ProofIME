@@ -1,0 +1,21 @@
+{
+  "direct": "Direct Proof\n\nAssume P.\n\n...\n\nTherefore Q.\n\nHence P ⇒ Q.",
+
+  "contrapositive": "Proof by Contraposition\n\nAssume ¬Q.\n\n...\n\nTherefore ¬P.\n\nHence P ⇒ Q.",
+
+  "contradiction": "Proof by Contradiction\n\nAssume ¬P.\n\n...\n\nObtain a contradiction.\n\nTherefore P.",
+
+  "cases": "Proof by Cases\n\nCase 1:\n\n...\n\nCase 2:\n\n...\n\nSince all possible cases have been exhausted, the statement holds.",
+
+  "biconditional": "Biconditional Proof\n\n(⇒)\nAssume P.\n\n...\n\nTherefore Q.\n\n(⇐)\nAssume Q.\n\n...\n\nTherefore P.\n\nHence P ⇔ Q.",
+
+  "forall": "Universal Proof\n\nLet x be an arbitrary element of the universe.\n\n...\n\nTherefore P(x).\n\nHence ∀x P(x).",
+
+  "exists": "Existence Proof\n\nChoose x = ____.\n\n...\n\nTherefore P(x).\n\nHence ∃x P(x).",
+
+  "exists_unique": "Existence and Uniqueness Proof\n\nExistence:\nChoose x = ____.\n\n...\n\nUniqueness:\nSuppose y also satisfies the property.\n\n...\n\nTherefore y = x.\n\nHence ∃!x P(x).",
+
+  "divisibility": "Divisibility Proof\n\nLet a,b ∈ ℤ.\n\nAssume a divides b.\n\nThen there exists k ∈ ℤ such that\n\nb = ak.\n\n...\n\nTherefore a divides ____.",
+
+  "induction": "Proof by Induction\n\nBase Case:\n\n...\n\nInductive Hypothesis:\nAssume P(n).\n\nInductive Step:\nShow P(n+1).\n\n...\n\nTherefore P(n) is true for all n."
+}
