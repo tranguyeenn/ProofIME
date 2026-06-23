@@ -1,5 +1,6 @@
 import SwiftUI
 import UniformTypeIdentifiers
+import AppKit
 
 enum ReferencePanel: String, CaseIterable, Identifiable {
 	case templates = "Templates"
@@ -77,8 +78,24 @@ struct ContentView: View {
 
 			Divider()
 
-			Text("Output")
-				.font(.headline)
+			HStack {
+				Text("Output")
+					.font(.headline)
+
+				Spacer()
+
+				Button("Copy Output") {
+					copyOutput()
+				}
+
+				Button("Save .txt") {
+					saveOutput(fileExtension: "txt")
+				}
+
+				Button("Save .tex") {
+					saveOutput(fileExtension: "tex")
+				}
+			}
 
 			ScrollView {
 				Text(output)
@@ -128,7 +145,31 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-		.frame(width: 700, height: 650)
+		.frame(width: 760, height: 680)
+	}
+
+	private func copyOutput() {
+		NSPasteboard.general.clearContents()
+		NSPasteboard.general.setString(output, forType: .string)
+	}
+
+	private func saveOutput(fileExtension: String) {
+		let panel = NSSavePanel()
+		panel.allowedContentTypes = fileExtension == "tex" ? [.tex] : [.plainText]
+		panel.nameFieldStringValue = "proofime-output.\(fileExtension)"
+
+		if panel.runModal() == .OK,
+		   let url = panel.url {
+			do {
+				try output.write(
+					to: url,
+					atomically: true,
+					encoding: .utf8
+				)
+			} catch {
+				print("Failed to save output:", error)
+			}
+		}
 	}
 
 	private func importMappings() {
