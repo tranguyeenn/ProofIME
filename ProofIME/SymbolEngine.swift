@@ -20,31 +20,19 @@ struct SymbolEngine {
 		self.latexMappings = latexMappings
 	}
 
-	func transform(
-		_ text: String,
-		mode: OutputMode
-	) -> String {
+	func transform(_ text: String, mode: OutputMode) -> String {
+		let mappings = mode == .unicode ? unicodeMappings : latexMappings
 
-		let mappings =
-			mode == .unicode
-			? unicodeMappings
-			: latexMappings
+		let tokens = text.split(
+			separator: " ",
+			omittingEmptySubsequences: false
+		)
 
-		var result = text
-
-		for shortcut in mappings.keys.sorted(
-			by: { $0.count > $1.count }
-		) {
-
-			if let symbol = mappings[shortcut] {
-
-				result = result.replacingOccurrences(
-					of: shortcut,
-					with: symbol
-				)
+		return tokens
+			.map { token in
+				let word = String(token)
+				return mappings[word] ?? word
 			}
-		}
-
-		return result
+			.joined(separator: " ")
 	}
 }
