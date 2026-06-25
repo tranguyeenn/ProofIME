@@ -28,6 +28,18 @@ struct ContentView: View {
 		return SymbolEngine()
 	}
 
+	private var replacementEngine: ReplacementEngine {
+		let rules: [ReplacementRule]
+
+		if let customMappings {
+			rules = customMappings.asReplacementRules(mode: .unicode)
+		} else {
+			rules = SymbolLoader.loadRules()
+		}
+
+		return ReplacementEngine(rules: rules)
+	}
+
 	private var symbols: [SymbolMapping] {
 		let mappings = customMappings ?? SymbolLoader.loadMappings()
 
@@ -45,6 +57,10 @@ struct ContentView: View {
 
 		if expandedTemplate != input {
 			return expandedTemplate
+		}
+
+		if let directReplacement = replacementEngine.replacement(for: input) {
+			return directReplacement
 		}
 
 		return engine.transform(input, mode: mode)
@@ -172,7 +188,39 @@ struct ContentView: View {
 		.padding()
 		.frame(width: 760, height: 700)
 	}
+	
+	private func testReplacementEngine() {
+		let engine = ReplacementEngine(
+			rules: SymbolLoader.loadRules()
+		)
 
+		print("")
+		print("========== ReplacementEngine Test ==========")
+
+		print("fa ->", engine.replacement(for: "fa") ?? "nil")
+		print("RR ->", engine.replacement(for: "RR") ?? "nil")
+		print("feature ->", engine.replacement(for: "feature") ?? "nil")
+
+		print("Has replacement for 'fa':",
+			  engine.hasReplacement(for: "fa"))
+
+		print("Has replacement for 'feature':",
+			  engine.hasReplacement(for: "feature"))
+
+		if let rule = engine.rule(for: "fa") {
+			print("Matched rule:")
+			print("Trigger:", rule.trigger)
+			print("Output:", rule.output)
+			print("Aliases:", rule.aliases)
+			print("Priority:", rule.priority)
+		} else {
+			print("No rule found for 'fa'")
+		}
+
+		print("============================================")
+		print("")
+	}
+	
 	private func reloadConfig() {
 		customMappings = nil
 		configReloadID = UUID()
