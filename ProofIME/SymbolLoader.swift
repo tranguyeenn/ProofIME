@@ -2,6 +2,8 @@ import Foundation
 
 final class SymbolLoader {
 
+	// MARK: - Legacy mappings
+
 	static func loadMappings() -> [String: String] {
 		AppConfig.ensureConfigDirectoryExists()
 
@@ -24,16 +26,77 @@ final class SymbolLoader {
 		do {
 			let data = try Data(contentsOf: url)
 
-			let mappings = try JSONDecoder()
-				.decode([String: String].self, from: data)
+			// First try old format:
+			// { "fa": "∀", "ex": "∃" }
+			if let mappings = try? JSONDecoder().decode([String: String].self, from: data) {
+				print("Loaded legacy mappings:", mappings.count)
+				return mappings
+			}
 
-			print("Loaded mappings:", mappings.count)
+			// Then try new rule format:
+			// [ { "trigger": "fa", "output": "∀", ... } ]
+			let rules = try JSONDecoder().decode([ReplacementRule].self, from: data)
+
+			let mappings = Dictionary(
+				uniqueKeysWithValues: rules.map { rule in
+					(rule.trigger, rule.output)
+				}
+			)
+
+			print("Loaded rule mappings:", mappings.count)
 			return mappings
+
 		} catch {
 			print("Failed to load mappings:", error)
 			return [:]
 		}
 	}
+
+	// MARK: - Rule mappings
+
+	static func loadRules() -> [ReplacementRule] {
+		AppConfig.ensureConfigDirectoryExists()
+
+		if FileManager.default.fileExists(atPath: AppConfig.userSymbolsURL.path) {
+			return loadRules(from: AppConfig.userSymbolsURL)
+		}
+
+		guard let url = Bundle.main.url(
+			forResource: "symbols",
+			withExtension: "json"
+		) else {
+			print("symbols.json not found")
+			return []
+		}
+
+		return loadRules(from: url)
+	}
+
+	private static func loadRules(from url: URL) -> [ReplacementRule] {
+		do {
+			let data = try Data(contentsOf: url)
+			let decoder = JSONDecoder()
+
+			// New format
+			if let rules = try? decoder.decode([ReplacementRule].self, from: data) {
+				print("Loaded rules:", rules.count)
+				return rules.sorted { $0.priority > $1.priority }
+			}
+
+			// Old format fallback
+			let mappings = try decoder.decode([String: String].self, from: data)
+			let rules = mappings.asReplacementRules()
+
+			print("Loaded legacy mappings as rules:", rules.count)
+			return rules.sorted { $0.priority > $1.priority }
+
+		} catch {
+			print("Failed to load rules:", error)
+			return []
+		}
+	}
+
+	// MARK: - LaTeX mappings
 
 	static func loadLatexMappings() -> [String: String] {
 		[
@@ -68,6 +131,8 @@ final class SymbolLoader {
 			"bet": "\\beta"
 		]
 	}
+
+	// MARK: - UI list
 
 	static func loadSymbolList() -> [SymbolMapping] {
 		let mappings = loadMappings()

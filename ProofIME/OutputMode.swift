@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum OutputMode: String, CaseIterable, Identifiable {
+enum OutputMode: String, Codable, CaseIterable, Identifiable {
 	case unicode = "Unicode"
 	case latex = "LaTeX"
 
