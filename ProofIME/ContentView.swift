@@ -186,7 +186,11 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-		.frame(width: 760, height: 700)
+				.frame(width: 760, height: 700)
+				.onAppear {
+					testReplacementEngine()
+					testTokenizer()
+				}
 	}
 	
 	private func testReplacementEngine() {
@@ -219,6 +223,16 @@ struct ContentView: View {
 
 		print("============================================")
 		print("")
+	}
+	
+	private func testTokenizer() {
+		print("========== Tokenizer Test ==========")
+		print(Tokenizer.tokens(from: "fa inn RR"))
+		print("Current:", Tokenizer.currentToken(in: "fa inn RR"))
+		print("Ends boundary:", Tokenizer.endsWithBoundary("fa "))
+		print("Before boundary:", Tokenizer.tokenBeforeBoundary(in: "fa "))
+		print("Feature:", Tokenizer.tokens(from: "feature"))
+		print("====================================")
 	}
 	
 	private func reloadConfig() {
