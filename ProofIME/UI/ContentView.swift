@@ -235,28 +235,37 @@ struct ContentView: View {
 			Text("Editor")
 				.font(.headline)
 
-			LiveReplacementTextView(
-				text: $input,
-				insertionRequest: $insertionRequest,
-				replacementRequest: $replacementRequest,
-				cursorPosition: $cursorPosition,
-				replacementEngine: replacementEngine,
-				onArrowUp: {
-					handleMove(.up)
-				},
-				onArrowDown: {
-					handleMove(.down)
-				},
-				onEnter: {
-					commitSelectedCandidate()
-				},
-				onEscape: {
-					selectedCandidateIndex = 0
-				}
-			)
-			.frame(height: 100)
+			ZStack(alignment: .topLeading) {
+				LiveReplacementTextView(
+					text: $input,
+					insertionRequest: $insertionRequest,
+					replacementRequest: $replacementRequest,
+					cursorPosition: $cursorPosition,
+					replacementEngine: replacementEngine,
+					onArrowUp: {
+						handleMove(.up)
+					},
+					onArrowDown: {
+						handleMove(.down)
+					},
+					onEnter: {
+						commitSelectedCandidate()
+					},
+					onEscape: {
+						selectedCandidateIndex = 0
+					}
+				)
+				.frame(height: 100)
 
-			candidatePreview
+				if !candidateOptions.isEmpty {
+					CandidatePopupView(
+						candidates: candidateOptions,
+						selectedIndex: selectedCandidateIndex
+					)
+					.offset(x: 20, y: 40)
+				}
+			}
+			.frame(height: 120)
 
 			Divider()
 
@@ -308,70 +317,6 @@ struct ContentView: View {
 		.frame(width: 760, height: 790)
 		.onChange(of: currentCandidate?.token) {
 			selectedCandidateIndex = 0
-		}
-	}
-
-	private var candidatePreview: some View {
-		Group {
-			if !candidateOptions.isEmpty {
-				VStack(alignment: .leading, spacing: 6) {
-					HStack {
-						Text("Current token:")
-							.foregroundStyle(.secondary)
-
-						Text(candidateOptions[0].token)
-							.font(.system(.body, design: .monospaced))
-
-						Spacer()
-
-						Button("Insert Selected") {
-							commitSelectedCandidate()
-						}
-						.keyboardShortcut(.return, modifiers: [])
-					}
-
-					VStack(alignment: .leading, spacing: 4) {
-						ForEach(Array(candidateOptions.enumerated()), id: \.element.id) { index, option in
-							Button {
-								selectedCandidateIndex = index
-								commitSelectedCandidate()
-							} label: {
-								HStack(spacing: 10) {
-									Text(index == selectedCandidateIndex ? "▶" : " ")
-										.font(.system(.body, design: .monospaced))
-										.frame(width: 18)
-
-									Text(option.replacement)
-										.font(.title3)
-										.frame(width: 32, alignment: .leading)
-
-									Text(option.label)
-										.foregroundStyle(.secondary)
-
-									Text("used \(usageStore.usageCount(for: option.replacement))")
-										.font(.caption)
-										.foregroundStyle(.tertiary)
-
-									Spacer()
-								}
-								.padding(.vertical, 3)
-								.padding(.horizontal, 8)
-								.background(
-									index == selectedCandidateIndex
-									? Color.accentColor.opacity(0.15)
-									: Color.clear
-								)
-								.clipShape(RoundedRectangle(cornerRadius: 6))
-							}
-							.buttonStyle(.plain)
-						}
-					}
-					.padding(8)
-					.background(.thinMaterial)
-					.clipShape(RoundedRectangle(cornerRadius: 10))
-				}
-				.padding(.vertical, 4)
-			}
 		}
 	}
 
