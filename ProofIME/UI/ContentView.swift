@@ -19,6 +19,9 @@ struct ContentView: View {
 	@State private var configReloadID = UUID()
 	@State private var insertionRequest: String? = nil
 
+	@State private var templateSearch = ""
+	@State private var symbolSearch = ""
+
 	private var engine: SymbolEngine {
 		if let customMappings {
 			return SymbolEngine(unicodeMappings: customMappings)
@@ -49,6 +52,33 @@ struct ContentView: View {
 
 	private var templates: [ProofTemplate] {
 		ProofTemplateLoader.loadTemplates()
+	}
+
+	private var filteredTemplates: [ProofTemplate] {
+		let query = templateSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+
+		guard !query.isEmpty else {
+			return templates
+		}
+
+		return templates.filter { template in
+			template.trigger.localizedCaseInsensitiveContains(query)
+			|| template.title.localizedCaseInsensitiveContains(query)
+			|| template.body.localizedCaseInsensitiveContains(query)
+		}
+	}
+
+	private var filteredSymbols: [SymbolMapping] {
+		let query = symbolSearch.trimmingCharacters(in: .whitespacesAndNewlines)
+
+		guard !query.isEmpty else {
+			return symbols
+		}
+
+		return symbols.filter { symbol in
+			symbol.shortcut.localizedCaseInsensitiveContains(query)
+			|| symbol.symbol.localizedCaseInsensitiveContains(query)
+		}
 	}
 
 	private var output: String {
@@ -99,6 +129,12 @@ struct ContentView: View {
 						AppConfig.deleteUserTemplates()
 						reloadConfig()
 					}
+				}
+
+				Spacer()
+
+				Button("Clear Editor") {
+					input = ""
 				}
 			}
 
@@ -154,9 +190,23 @@ struct ContentView: View {
 				Text("Proof Templates")
 					.font(.headline)
 
-				List(templates) { template in
-					Button("\(template.trigger) → \(template.title)") {
+				TextField("Search templates by trigger, title, or body...", text: $templateSearch)
+					.textFieldStyle(.roundedBorder)
+
+				List(filteredTemplates) { template in
+					Button {
 						insertionRequest = template.body
+					} label: {
+						VStack(alignment: .leading, spacing: 4) {
+							Text("\(template.trigger) → \(template.title)")
+								.font(.headline)
+
+							Text(template.body)
+								.font(.caption)
+								.foregroundStyle(.secondary)
+								.lineLimit(2)
+						}
+						.padding(.vertical, 4)
 					}
 				}
 				.frame(height: 260)
@@ -165,7 +215,10 @@ struct ContentView: View {
 				Text("Available Symbols")
 					.font(.headline)
 
-				List(symbols) { item in
+				TextField("Search symbols by shortcut or symbol...", text: $symbolSearch)
+					.textFieldStyle(.roundedBorder)
+
+				List(filteredSymbols) { item in
 					Button {
 						insertionRequest = item.symbol
 					} label: {
@@ -187,11 +240,13 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-		.frame(width: 760, height: 700)
+		.frame(width: 760, height: 740)
 	}
 
 	private func reloadConfig() {
 		customMappings = nil
+		templateSearch = ""
+		symbolSearch = ""
 		configReloadID = UUID()
 	}
 
