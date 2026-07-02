@@ -2,8 +2,6 @@
 //  LiveReplacementTextView.swift
 //  ProofIME
 //
-//  Created by Trang Nguyen on 7/1/26.
-//
 
 import SwiftUI
 import AppKit
@@ -29,7 +27,6 @@ struct LiveReplacementTextView: NSViewRepresentable {
 		}
 
 		scrollView.documentView = textView
-
 		return scrollView
 	}
 
@@ -76,37 +73,28 @@ final class ProofTextView: NSTextView {
 			return
 		}
 
-		let trigger: ReplacementTrigger?
-
-		switch characters {
-		case " ":
-			trigger = .space
-		case "\t":
-			trigger = .tab
-		case "\r":
-			trigger = .enter
-		default:
-			trigger = nil
-		}
-
-		guard let trigger,
+		guard characters == " ",
 			  let replacementEngine else {
 			super.keyDown(with: event)
+			onTextChange?(string)
 			return
 		}
 
-		let cursorOffset = selectedRange().location
-		let controller = LiveReplacementController(engine: replacementEngine)
+		let cursorPosition = selectedRange().location
 
-		let result = controller.handleTrigger(
+		let controller = LiveReplacementController(
+			replacementEngine: replacementEngine
+		)
+
+		let result = controller.processTrigger(
 			text: string,
-			cursorOffset: cursorOffset,
-			trigger: trigger
+			cursorPosition: cursorPosition,
+			trigger: " "
 		)
 
 		if result.didReplace {
 			string = result.text
-			setSelectedRange(NSRange(location: result.cursorOffset, length: 0))
+			setSelectedRange(NSRange(location: result.cursorPosition, length: 0))
 			onTextChange?(result.text)
 		} else {
 			super.keyDown(with: event)
