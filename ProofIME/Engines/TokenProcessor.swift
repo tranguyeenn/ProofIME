@@ -5,6 +5,11 @@
 
 import Foundation
 
+struct TokenCandidate: Equatable {
+	let token: String
+	let replacement: String
+}
+
 struct TokenProcessor {
 
 	let replacementEngine: ReplacementEngine
@@ -48,18 +53,35 @@ struct TokenProcessor {
 		return token
 	}
 
-	func hasReplacement(
+	func candidate(
 		in text: String,
 		cursorPosition: Int
-	) -> Bool {
+	) -> TokenCandidate? {
 		guard let token = currentToken(
 			in: text,
 			cursorPosition: cursorPosition
 		) else {
-			return false
+			return nil
 		}
 
-		return replacementEngine.hasReplacement(for: token)
+		guard let replacement = replacementEngine.replacement(for: token) else {
+			return nil
+		}
+
+		return TokenCandidate(
+			token: token,
+			replacement: replacement
+		)
+	}
+
+	func hasReplacement(
+		in text: String,
+		cursorPosition: Int
+	) -> Bool {
+		candidate(
+			in: text,
+			cursorPosition: cursorPosition
+		) != nil
 	}
 
 	func process(

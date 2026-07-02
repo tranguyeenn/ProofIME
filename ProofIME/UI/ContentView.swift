@@ -21,6 +21,7 @@ struct ContentView: View {
 
 	@State private var templateSearch = ""
 	@State private var symbolSearch = ""
+	@State private var cursorPosition = 0
 
 	@AppStorage("favoriteTemplateIDs")
 	private var favoriteTemplateIDsRaw = ""
@@ -118,6 +119,17 @@ struct ContentView: View {
 		}
 	}
 
+	private var currentCandidate: TokenCandidate? {
+		let processor = TokenProcessor(
+			replacementEngine: replacementEngine
+		)
+
+		return processor.candidate(
+			in: input,
+			cursorPosition: cursorPosition
+		)
+	}
+
 	private var output: String {
 		if let directReplacement = replacementEngine.replacement(for: input) {
 			return directReplacement
@@ -172,6 +184,7 @@ struct ContentView: View {
 
 				Button("Clear Editor") {
 					input = ""
+					cursorPosition = 0
 				}
 			}
 
@@ -181,9 +194,12 @@ struct ContentView: View {
 			LiveReplacementTextView(
 				text: $input,
 				insertionRequest: $insertionRequest,
+				cursorPosition: $cursorPosition,
 				replacementEngine: replacementEngine
 			)
 			.frame(height: 100)
+
+			candidatePreview
 
 			Divider()
 
@@ -232,7 +248,32 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-		.frame(width: 760, height: 760)
+		.frame(width: 760, height: 790)
+	}
+
+	private var candidatePreview: some View {
+		Group {
+			if let candidate = currentCandidate {
+				HStack(spacing: 8) {
+					Text("Current token:")
+						.foregroundStyle(.secondary)
+
+					Text(candidate.token)
+						.font(.system(.body, design: .monospaced))
+
+					Text("Suggestion:")
+						.foregroundStyle(.secondary)
+
+					Button(candidate.replacement) {
+						insertionRequest = candidate.replacement
+					}
+					.buttonStyle(.bordered)
+
+					Spacer()
+				}
+				.padding(.vertical, 4)
+			}
+		}
 	}
 
 	private var templateReferencePanel: some View {

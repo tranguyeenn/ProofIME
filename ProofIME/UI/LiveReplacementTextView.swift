@@ -9,6 +9,7 @@ import AppKit
 struct LiveReplacementTextView: NSViewRepresentable {
 	@Binding var text: String
 	@Binding var insertionRequest: String?
+	@Binding var cursorPosition: Int
 
 	let replacementEngine: ReplacementEngine
 
@@ -39,6 +40,10 @@ struct LiveReplacementTextView: NSViewRepresentable {
 			text = newText
 		}
 
+		textView.onCursorChange = { newPosition in
+			cursorPosition = newPosition
+		}
+
 		scrollView.documentView = textView
 
 		return scrollView
@@ -62,6 +67,7 @@ struct LiveReplacementTextView: NSViewRepresentable {
 
 			DispatchQueue.main.async {
 				self.text = textView.string
+				self.cursorPosition = textView.selectedRange().location
 				self.insertionRequest = nil
 				textView.forceEditorStyle()
 			}
@@ -86,6 +92,15 @@ struct LiveReplacementTextView: NSViewRepresentable {
 
 			textView.forceEditorStyle()
 			parent.text = textView.string
+			parent.cursorPosition = textView.selectedRange().location
+		}
+
+		func textViewDidChangeSelection(_ notification: Notification) {
+			guard let textView = notification.object as? ProofTextView else {
+				return
+			}
+
+			parent.cursorPosition = textView.selectedRange().location
 		}
 	}
 }
@@ -93,6 +108,7 @@ struct LiveReplacementTextView: NSViewRepresentable {
 final class ProofTextView: NSTextView {
 	var replacementEngine: ReplacementEngine?
 	var onTextChange: ((String) -> Void)?
+	var onCursorChange: ((Int) -> Void)?
 
 	func forceEditorStyle() {
 		font = .systemFont(ofSize: 16)
@@ -132,6 +148,7 @@ final class ProofTextView: NSTextView {
 
 			forceEditorStyle()
 			onTextChange?(string)
+			onCursorChange?(newCursorPosition)
 		}
 	}
 
@@ -140,6 +157,7 @@ final class ProofTextView: NSTextView {
 			super.keyDown(with: event)
 			forceEditorStyle()
 			onTextChange?(string)
+			onCursorChange?(selectedRange().location)
 			return
 		}
 
@@ -164,6 +182,7 @@ final class ProofTextView: NSTextView {
 			super.keyDown(with: event)
 			forceEditorStyle()
 			onTextChange?(string)
+			onCursorChange?(selectedRange().location)
 			return
 		}
 
@@ -191,10 +210,12 @@ final class ProofTextView: NSTextView {
 
 			forceEditorStyle()
 			onTextChange?(result.text)
+			onCursorChange?(result.cursorPosition)
 		} else {
 			super.keyDown(with: event)
 			forceEditorStyle()
 			onTextChange?(string)
+			onCursorChange?(selectedRange().location)
 		}
 	}
 }
