@@ -18,6 +18,7 @@ struct ContentView: View {
 	@State private var customMappings: [String: String]? = nil
 	@State private var configReloadID = UUID()
 	@State private var insertionRequest: String? = nil
+	@State private var replacementRequest: TokenCandidate? = nil
 
 	@State private var templateSearch = ""
 	@State private var symbolSearch = ""
@@ -194,6 +195,7 @@ struct ContentView: View {
 			LiveReplacementTextView(
 				text: $input,
 				insertionRequest: $insertionRequest,
+				replacementRequest: $replacementRequest,
 				cursorPosition: $cursorPosition,
 				replacementEngine: replacementEngine
 			)
@@ -265,7 +267,7 @@ struct ContentView: View {
 						.foregroundStyle(.secondary)
 
 					Button(candidate.replacement) {
-						insertionRequest = candidate.replacement
+						replacementRequest = candidate
 					}
 					.buttonStyle(.bordered)
 

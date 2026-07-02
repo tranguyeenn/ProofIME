@@ -8,16 +8,17 @@ import Foundation
 struct TokenCandidate: Equatable {
 	let token: String
 	let replacement: String
+	let range: NSRange
 }
 
 struct TokenProcessor {
 
 	let replacementEngine: ReplacementEngine
 
-	func currentToken(
+	func currentTokenRange(
 		in text: String,
 		cursorPosition: Int
-	) -> String? {
+	) -> NSRange? {
 		guard !text.isEmpty else {
 			return nil
 		}
@@ -31,38 +32,61 @@ struct TokenProcessor {
 			return nil
 		}
 
-		let cursorIndex = text.index(
-			text.startIndex,
-			offsetBy: safeCursorPosition
-		)
+		let characters = Array(text)
 
-		let beforeCursor = String(text[..<cursorIndex])
+		var start = safeCursorPosition
 
-		let separators = CharacterSet.whitespacesAndNewlines
-			.union(.punctuationCharacters)
+		while start > 0 {
+			let previousCharacter = characters[start - 1]
 
-		let parts = beforeCursor.components(
-			separatedBy: separators
-		)
+			if isTokenBoundary(previousCharacter) {
+				break
+			}
 
-		guard let token = parts.last,
-			  !token.isEmpty else {
+			start -= 1
+		}
+
+		let length = safeCursorPosition - start
+
+		guard length > 0 else {
 			return nil
 		}
 
-		return token
+		return NSRange(location: start, length: length)
+	}
+
+	func currentToken(
+		in text: String,
+		cursorPosition: Int
+	) -> String? {
+		guard let range = currentTokenRange(
+			in: text,
+			cursorPosition: cursorPosition
+		) else {
+			return nil
+		}
+
+		let characters = Array(text)
+		let tokenCharacters = characters[range.location..<(range.location + range.length)]
+
+		return String(tokenCharacters)
 	}
 
 	func candidate(
 		in text: String,
 		cursorPosition: Int
 	) -> TokenCandidate? {
-		guard let token = currentToken(
+		guard let range = currentTokenRange(
 			in: text,
 			cursorPosition: cursorPosition
 		) else {
 			return nil
 		}
+
+		let characters = Array(text)
+		let token = String(
+			characters[range.location..<(range.location + range.length)]
+		)
 
 		guard let replacement = replacementEngine.replacement(for: token) else {
 			return nil
@@ -70,7 +94,8 @@ struct TokenProcessor {
 
 		return TokenCandidate(
 			token: token,
-			replacement: replacement
+			replacement: replacement,
+			range: range
 		)
 	}
 
@@ -98,5 +123,12 @@ struct TokenProcessor {
 			cursorPosition: cursorPosition,
 			trigger: trigger
 		)
+	}
+
+	private func isTokenBoundary(_ character: Character) -> Bool {
+		character.unicodeScalars.allSatisfy { scalar in
+			CharacterSet.whitespacesAndNewlines.contains(scalar)
+			|| CharacterSet.punctuationCharacters.contains(scalar)
+		}
 	}
 }

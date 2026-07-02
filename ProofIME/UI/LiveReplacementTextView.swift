@@ -9,6 +9,7 @@ import AppKit
 struct LiveReplacementTextView: NSViewRepresentable {
 	@Binding var text: String
 	@Binding var insertionRequest: String?
+	@Binding var replacementRequest: TokenCandidate?
 	@Binding var cursorPosition: Int
 
 	let replacementEngine: ReplacementEngine
@@ -60,6 +61,22 @@ struct LiveReplacementTextView: NSViewRepresentable {
 		if textView.string != text {
 			textView.string = text
 			textView.forceEditorStyle()
+		}
+
+		if let replacementRequest {
+			textView.replaceRange(
+				replacementRequest.range,
+				with: replacementRequest.replacement
+			)
+
+			DispatchQueue.main.async {
+				self.text = textView.string
+				self.cursorPosition = textView.selectedRange().location
+				self.replacementRequest = nil
+				textView.forceEditorStyle()
+			}
+
+			return
 		}
 
 		if let insertionRequest {
@@ -131,11 +148,46 @@ final class ProofTextView: NSTextView {
 		)
 	}
 
+	func replaceRange(
+		_ range: NSRange,
+		with replacement: String
+	) {
+		guard let textStorage else {
+			return
+		}
+
+		guard range.location >= 0,
+			  range.location + range.length <= string.count else {
+			return
+		}
+
+		textStorage.replaceCharacters(
+			in: range,
+			with: replacement
+		)
+
+		let newCursorPosition = range.location + replacement.count
+
+		setSelectedRange(
+			NSRange(
+				location: newCursorPosition,
+				length: 0
+			)
+		)
+
+		forceEditorStyle()
+		onTextChange?(string)
+		onCursorChange?(newCursorPosition)
+	}
+
 	func insertTextAtCursor(_ insertedText: String) {
 		let range = selectedRange()
 
 		if let textStorage {
-			textStorage.replaceCharacters(in: range, with: insertedText)
+			textStorage.replaceCharacters(
+				in: range,
+				with: insertedText
+			)
 
 			let newCursorPosition = range.location + insertedText.count
 
