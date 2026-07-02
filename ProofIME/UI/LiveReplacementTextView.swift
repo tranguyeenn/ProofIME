@@ -14,6 +14,11 @@ struct LiveReplacementTextView: NSViewRepresentable {
 
 	let replacementEngine: ReplacementEngine
 
+	var onArrowUp: (() -> Void)? = nil
+	var onArrowDown: (() -> Void)? = nil
+	var onEnter: (() -> Void)? = nil
+	var onEscape: (() -> Void)? = nil
+
 	func makeNSView(context: Context) -> NSScrollView {
 		let scrollView = NSScrollView()
 		scrollView.hasVerticalScroller = true
@@ -45,6 +50,22 @@ struct LiveReplacementTextView: NSViewRepresentable {
 			cursorPosition = newPosition
 		}
 
+		textView.onArrowUp = {
+			onArrowUp?()
+		}
+
+		textView.onArrowDown = {
+			onArrowDown?()
+		}
+
+		textView.onEnter = {
+			onEnter?()
+		}
+
+		textView.onEscape = {
+			onEscape?()
+		}
+
 		scrollView.documentView = textView
 
 		return scrollView
@@ -57,6 +78,22 @@ struct LiveReplacementTextView: NSViewRepresentable {
 
 		textView.replacementEngine = replacementEngine
 		textView.forceEditorStyle()
+
+		textView.onArrowUp = {
+			onArrowUp?()
+		}
+
+		textView.onArrowDown = {
+			onArrowDown?()
+		}
+
+		textView.onEnter = {
+			onEnter?()
+		}
+
+		textView.onEscape = {
+			onEscape?()
+		}
 
 		if textView.string != text {
 			textView.string = text
@@ -126,6 +163,11 @@ final class ProofTextView: NSTextView {
 	var replacementEngine: ReplacementEngine?
 	var onTextChange: ((String) -> Void)?
 	var onCursorChange: ((Int) -> Void)?
+
+	var onArrowUp: (() -> Void)?
+	var onArrowDown: (() -> Void)?
+	var onEnter: (() -> Void)?
+	var onEscape: (() -> Void)?
 
 	func forceEditorStyle() {
 		font = .systemFont(ofSize: 16)
@@ -205,12 +247,36 @@ final class ProofTextView: NSTextView {
 	}
 
 	override func keyDown(with event: NSEvent) {
+		switch event.keyCode {
+		case 125:
+			onArrowDown?()
+			return
+
+		case 126:
+			onArrowUp?()
+			return
+
+		case 53:
+			onEscape?()
+			return
+
+		default:
+			break
+		}
+
 		guard let characters = event.charactersIgnoringModifiers else {
 			super.keyDown(with: event)
 			forceEditorStyle()
 			onTextChange?(string)
 			onCursorChange?(selectedRange().location)
 			return
+		}
+
+		if characters == "\r" {
+			if onEnter != nil {
+				onEnter?()
+				return
+			}
 		}
 
 		let trigger: String?

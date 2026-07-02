@@ -9,6 +9,13 @@ enum ReferencePanel: String, CaseIterable, Identifiable {
 	var id: String { rawValue }
 }
 
+private struct CandidateOption: Identifiable, Hashable {
+	let id = UUID()
+	let token: String
+	let replacement: String
+	let label: String
+}
+
 struct ContentView: View {
 
 	@State private var input = ""
@@ -23,6 +30,8 @@ struct ContentView: View {
 	@State private var templateSearch = ""
 	@State private var symbolSearch = ""
 	@State private var cursorPosition = 0
+
+	@State private var selectedCandidateIndex = 0
 
 	@AppStorage("favoriteTemplateIDs")
 	private var favoriteTemplateIDsRaw = ""
@@ -131,6 +140,53 @@ struct ContentView: View {
 		)
 	}
 
+	private var candidateOptions: [CandidateOption] {
+		guard let candidate = currentCandidate else {
+			return []
+		}
+
+		var options: [CandidateOption] = [
+			CandidateOption(
+				token: candidate.token,
+				replacement: candidate.replacement,
+				label: "default"
+			)
+		]
+
+		if candidate.token == "fa" {
+			options.append(contentsOf: [
+				CandidateOption(token: candidate.token, replacement: "∧", label: "and"),
+				CandidateOption(token: candidate.token, replacement: "⇒", label: "implies")
+			])
+		}
+
+		if candidate.token == "and" {
+			options.append(contentsOf: [
+				CandidateOption(token: candidate.token, replacement: "∩", label: "intersection"),
+				CandidateOption(token: candidate.token, replacement: "∧", label: "logical and")
+			])
+		}
+
+		var seen = Set<String>()
+
+		return options.filter { option in
+			if seen.contains(option.replacement) {
+				return false
+			}
+
+			seen.insert(option.replacement)
+			return true
+		}
+	}
+
+	private var selectedCandidate: CandidateOption? {
+		guard candidateOptions.indices.contains(selectedCandidateIndex) else {
+			return candidateOptions.first
+		}
+
+		return candidateOptions[selectedCandidateIndex]
+	}
+
 	private var output: String {
 		if let directReplacement = replacementEngine.replacement(for: input) {
 			return directReplacement
@@ -186,6 +242,7 @@ struct ContentView: View {
 				Button("Clear Editor") {
 					input = ""
 					cursorPosition = 0
+					selectedCandidateIndex = 0
 				}
 			}
 
@@ -197,8 +254,21 @@ struct ContentView: View {
 				insertionRequest: $insertionRequest,
 				replacementRequest: $replacementRequest,
 				cursorPosition: $cursorPosition,
-				replacementEngine: replacementEngine
+				replacementEngine: replacementEngine,
+				onArrowUp: {
+					handleMove(.up)
+				},
+				onArrowDown: {
+					handleMove(.down)
+				},
+				onEnter: {
+					commitSelectedCandidate()
+				},
+				onEscape: {
+					selectedCandidateIndex = 0
+				}
 			)
+			.frame(height: 100)
 			.frame(height: 100)
 
 			candidatePreview
@@ -251,27 +321,71 @@ struct ContentView: View {
 		}
 		.padding()
 		.frame(width: 760, height: 790)
+		.onMoveCommand { direction in
+			handleMove(direction)
+		}
+		.onExitCommand {
+			selectedCandidateIndex = 0
+		}
+		.onChange(of: currentCandidate?.token) {
+			selectedCandidateIndex = 0
+		}
 	}
 
 	private var candidatePreview: some View {
 		Group {
-			if let candidate = currentCandidate {
-				HStack(spacing: 8) {
-					Text("Current token:")
-						.foregroundStyle(.secondary)
+			if !candidateOptions.isEmpty {
+				VStack(alignment: .leading, spacing: 6) {
+					HStack {
+						Text("Current token:")
+							.foregroundStyle(.secondary)
 
-					Text(candidate.token)
-						.font(.system(.body, design: .monospaced))
+						Text(candidateOptions[0].token)
+							.font(.system(.body, design: .monospaced))
 
-					Text("Suggestion:")
-						.foregroundStyle(.secondary)
+						Spacer()
 
-					Button(candidate.replacement) {
-						replacementRequest = candidate
+						Button("Insert Selected") {
+							commitSelectedCandidate()
+						}
+						.keyboardShortcut(.return, modifiers: [])
 					}
-					.buttonStyle(.bordered)
 
-					Spacer()
+					VStack(alignment: .leading, spacing: 4) {
+						ForEach(Array(candidateOptions.enumerated()), id: \.element.id) { index, option in
+							Button {
+								selectedCandidateIndex = index
+								commitSelectedCandidate()
+							} label: {
+								HStack(spacing: 10) {
+									Text(index == selectedCandidateIndex ? "▶" : " ")
+										.font(.system(.body, design: .monospaced))
+										.frame(width: 18)
+
+									Text(option.replacement)
+										.font(.title3)
+										.frame(width: 32, alignment: .leading)
+
+									Text(option.label)
+										.foregroundStyle(.secondary)
+
+									Spacer()
+								}
+								.padding(.vertical, 3)
+								.padding(.horizontal, 8)
+								.background(
+									index == selectedCandidateIndex
+									? Color.accentColor.opacity(0.15)
+									: Color.clear
+								)
+								.clipShape(RoundedRectangle(cornerRadius: 6))
+							}
+							.buttonStyle(.plain)
+						}
+					}
+					.padding(8)
+					.background(.thinMaterial)
+					.clipShape(RoundedRectangle(cornerRadius: 10))
 				}
 				.padding(.vertical, 4)
 			}
@@ -338,6 +452,68 @@ struct ContentView: View {
 		}
 	}
 
+	private func handleMove(_ direction: MoveCommandDirection) {
+		guard !candidateOptions.isEmpty else {
+			return
+		}
+
+		switch direction {
+		case .down:
+			selectedCandidateIndex = (selectedCandidateIndex + 1) % candidateOptions.count
+
+		case .up:
+			selectedCandidateIndex = (selectedCandidateIndex - 1 + candidateOptions.count) % candidateOptions.count
+
+		default:
+			break
+		}
+	}
+
+	private func commitSelectedCandidate() {
+		guard let option = selectedCandidate else {
+			return
+		}
+
+		replaceToken(
+			option.token,
+			with: option.replacement
+		)
+
+		selectedCandidateIndex = 0
+	}
+
+	private func replaceToken(_ token: String, with replacement: String) {
+		guard !token.isEmpty else {
+			return
+		}
+
+		let safeCursor = min(
+			max(cursorPosition, 0),
+			input.count
+		)
+
+		guard safeCursor >= token.count else {
+			return
+		}
+
+		let endIndex = input.index(
+			input.startIndex,
+			offsetBy: safeCursor
+		)
+
+		let startIndex = input.index(
+			endIndex,
+			offsetBy: -token.count
+		)
+
+		input.replaceSubrange(
+			startIndex..<endIndex,
+			with: replacement
+		)
+
+		cursorPosition = safeCursor - token.count + replacement.count
+	}
+
 	private func templateRow(_ template: ProofTemplate) -> some View {
 		HStack(alignment: .top) {
 			Button {
@@ -383,6 +559,7 @@ struct ContentView: View {
 		templateSearch = ""
 		symbolSearch = ""
 		configReloadID = UUID()
+		selectedCandidateIndex = 0
 	}
 
 	private func copyOutput() {
