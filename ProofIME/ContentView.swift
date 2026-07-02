@@ -109,11 +109,14 @@ struct ContentView: View {
 				}
 			}
 
-			TextField(
-				"Type: fa x inn RR or /template contradiction",
-				text: $input
+			Text("Editor")
+				.font(.headline)
+
+			LiveReplacementTextView(
+				text: $input,
+				replacementEngine: replacementEngine
 			)
-			.textFieldStyle(.roundedBorder)
+			.frame(height: 100)
 
 			Divider()
 
@@ -186,55 +189,9 @@ struct ContentView: View {
 			Spacer()
 		}
 		.padding()
-				.frame(width: 760, height: 700)
-				.onAppear {
-					testReplacementEngine()
-					testTokenizer()
-				}
+		.frame(width: 760, height: 700)
 	}
-	
-	private func testReplacementEngine() {
-		let engine = ReplacementEngine(
-			rules: SymbolLoader.loadRules()
-		)
 
-		print("")
-		print("========== ReplacementEngine Test ==========")
-
-		print("fa ->", engine.replacement(for: "fa") ?? "nil")
-		print("RR ->", engine.replacement(for: "RR") ?? "nil")
-		print("feature ->", engine.replacement(for: "feature") ?? "nil")
-
-		print("Has replacement for 'fa':",
-			  engine.hasReplacement(for: "fa"))
-
-		print("Has replacement for 'feature':",
-			  engine.hasReplacement(for: "feature"))
-
-		if let rule = engine.rule(for: "fa") {
-			print("Matched rule:")
-			print("Trigger:", rule.trigger)
-			print("Output:", rule.output)
-			print("Aliases:", rule.aliases)
-			print("Priority:", rule.priority)
-		} else {
-			print("No rule found for 'fa'")
-		}
-
-		print("============================================")
-		print("")
-	}
-	
-	private func testTokenizer() {
-		print("========== Tokenizer Test ==========")
-		print(Tokenizer.tokens(from: "fa inn RR"))
-		print("Current:", Tokenizer.currentToken(in: "fa inn RR"))
-		print("Ends boundary:", Tokenizer.endsWithBoundary("fa "))
-		print("Before boundary:", Tokenizer.tokenBeforeBoundary(in: "fa "))
-		print("Feature:", Tokenizer.tokens(from: "feature"))
-		print("====================================")
-	}
-	
 	private func reloadConfig() {
 		customMappings = nil
 		configReloadID = UUID()
