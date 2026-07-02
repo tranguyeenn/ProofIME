@@ -32,6 +32,9 @@ struct ContentView: View {
 	@State private var cursorPosition = 0
 
 	@State private var selectedCandidateIndex = 0
+	@State private var candidateRankRefreshID = UUID()
+
+	private let usageStore = CandidateUsageStore()
 
 	@AppStorage("favoriteTemplateIDs")
 	private var favoriteTemplateIDsRaw = ""
@@ -141,6 +144,8 @@ struct ContentView: View {
 	}
 
 	private var candidateOptions: [CandidateOption] {
+		_ = candidateRankRefreshID
+
 		guard let candidate = currentCandidate else {
 			return []
 		}
@@ -169,13 +174,24 @@ struct ContentView: View {
 
 		var seen = Set<String>()
 
-		return options.filter { option in
+		let uniqueOptions = options.filter { option in
 			if seen.contains(option.replacement) {
 				return false
 			}
 
 			seen.insert(option.replacement)
 			return true
+		}
+
+		return uniqueOptions.sorted { lhs, rhs in
+			let lhsCount = usageStore.usageCount(for: lhs.replacement)
+			let rhsCount = usageStore.usageCount(for: rhs.replacement)
+
+			if lhsCount != rhsCount {
+				return lhsCount > rhsCount
+			}
+
+			return lhs.label < rhs.label
 		}
 	}
 
@@ -269,7 +285,6 @@ struct ContentView: View {
 				}
 			)
 			.frame(height: 100)
-			.frame(height: 100)
 
 			candidatePreview
 
@@ -321,12 +336,6 @@ struct ContentView: View {
 		}
 		.padding()
 		.frame(width: 760, height: 790)
-		.onMoveCommand { direction in
-			handleMove(direction)
-		}
-		.onExitCommand {
-			selectedCandidateIndex = 0
-		}
 		.onChange(of: currentCandidate?.token) {
 			selectedCandidateIndex = 0
 		}
@@ -368,6 +377,10 @@ struct ContentView: View {
 
 									Text(option.label)
 										.foregroundStyle(.secondary)
+
+									Text("used \(usageStore.usageCount(for: option.replacement))")
+										.font(.caption)
+										.foregroundStyle(.tertiary)
 
 									Spacer()
 								}
@@ -474,6 +487,9 @@ struct ContentView: View {
 			return
 		}
 
+		usageStore.recordUse(of: option.replacement)
+		candidateRankRefreshID = UUID()
+
 		replaceToken(
 			option.token,
 			with: option.replacement
@@ -560,6 +576,7 @@ struct ContentView: View {
 		symbolSearch = ""
 		configReloadID = UUID()
 		selectedCandidateIndex = 0
+		candidateRankRefreshID = UUID()
 	}
 
 	private func copyOutput() {
