@@ -73,7 +73,20 @@ final class ProofTextView: NSTextView {
 			return
 		}
 
-		guard characters == " ",
+		let trigger: String?
+
+		switch characters {
+		case " ":
+			trigger = " "
+		case "\t":
+			trigger = "\t"
+		case "\r":
+			trigger = "\n"
+		default:
+			trigger = nil
+		}
+
+		guard let trigger,
 			  let replacementEngine else {
 			super.keyDown(with: event)
 			onTextChange?(string)
@@ -89,7 +102,7 @@ final class ProofTextView: NSTextView {
 		let result = controller.processTrigger(
 			text: string,
 			cursorPosition: cursorPosition,
-			trigger: " "
+			trigger: trigger
 		)
 
 		if result.didReplace {
