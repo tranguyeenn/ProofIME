@@ -18,16 +18,29 @@ struct LiveReplacementTextView: NSViewRepresentable {
 		scrollView.borderType = .bezelBorder
 
 		let textView = ProofTextView()
+
 		textView.isEditable = true
 		textView.isSelectable = true
 		textView.font = .systemFont(ofSize: 16)
+
+		textView.drawsBackground = true
+		textView.backgroundColor = .windowBackgroundColor
+		textView.textColor = .white
+		textView.insertionPointColor = .white
+		textView.typingAttributes = [
+			.font: NSFont.systemFont(ofSize: 16),
+			.foregroundColor: NSColor.white
+		]
+
 		textView.delegate = context.coordinator
 		textView.replacementEngine = replacementEngine
+
 		textView.onTextChange = { newText in
 			text = newText
 		}
 
 		scrollView.documentView = textView
+
 		return scrollView
 	}
 
@@ -37,16 +50,20 @@ struct LiveReplacementTextView: NSViewRepresentable {
 		}
 
 		textView.replacementEngine = replacementEngine
+		textView.forceEditorStyle()
 
 		if textView.string != text {
 			textView.string = text
+			textView.forceEditorStyle()
 		}
 
 		if let insertionRequest {
 			textView.insertTextAtCursor(insertionRequest)
+
 			DispatchQueue.main.async {
 				self.text = textView.string
 				self.insertionRequest = nil
+				textView.forceEditorStyle()
 			}
 		}
 	}
@@ -67,6 +84,7 @@ struct LiveReplacementTextView: NSViewRepresentable {
 				return
 			}
 
+			textView.forceEditorStyle()
 			parent.text = textView.string
 		}
 	}
@@ -76,13 +94,43 @@ final class ProofTextView: NSTextView {
 	var replacementEngine: ReplacementEngine?
 	var onTextChange: ((String) -> Void)?
 
+	func forceEditorStyle() {
+		font = .systemFont(ofSize: 16)
+		drawsBackground = true
+		backgroundColor = .windowBackgroundColor
+		textColor = .white
+		insertionPointColor = .white
+
+		typingAttributes = [
+			.font: NSFont.systemFont(ofSize: 16),
+			.foregroundColor: NSColor.white
+		]
+
+		textStorage?.addAttributes(
+			[
+				.font: NSFont.systemFont(ofSize: 16),
+				.foregroundColor: NSColor.white
+			],
+			range: NSRange(location: 0, length: string.count)
+		)
+	}
+
 	func insertTextAtCursor(_ insertedText: String) {
 		let range = selectedRange()
 
 		if let textStorage {
 			textStorage.replaceCharacters(in: range, with: insertedText)
+
 			let newCursorPosition = range.location + insertedText.count
-			setSelectedRange(NSRange(location: newCursorPosition, length: 0))
+
+			setSelectedRange(
+				NSRange(
+					location: newCursorPosition,
+					length: 0
+				)
+			)
+
+			forceEditorStyle()
 			onTextChange?(string)
 		}
 	}
@@ -90,6 +138,8 @@ final class ProofTextView: NSTextView {
 	override func keyDown(with event: NSEvent) {
 		guard let characters = event.charactersIgnoringModifiers else {
 			super.keyDown(with: event)
+			forceEditorStyle()
+			onTextChange?(string)
 			return
 		}
 
@@ -98,10 +148,13 @@ final class ProofTextView: NSTextView {
 		switch characters {
 		case " ":
 			trigger = " "
+
 		case "\t":
 			trigger = "\t"
+
 		case "\r":
 			trigger = "\n"
+
 		default:
 			trigger = nil
 		}
@@ -109,6 +162,7 @@ final class ProofTextView: NSTextView {
 		guard let trigger,
 			  let replacementEngine else {
 			super.keyDown(with: event)
+			forceEditorStyle()
 			onTextChange?(string)
 			return
 		}
@@ -127,10 +181,19 @@ final class ProofTextView: NSTextView {
 
 		if result.didReplace {
 			string = result.text
-			setSelectedRange(NSRange(location: result.cursorPosition, length: 0))
+
+			setSelectedRange(
+				NSRange(
+					location: result.cursorPosition,
+					length: 0
+				)
+			)
+
+			forceEditorStyle()
 			onTextChange?(result.text)
 		} else {
 			super.keyDown(with: event)
+			forceEditorStyle()
 			onTextChange?(string)
 		}
 	}

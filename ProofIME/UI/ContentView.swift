@@ -22,6 +22,24 @@ struct ContentView: View {
 	@State private var templateSearch = ""
 	@State private var symbolSearch = ""
 
+	@AppStorage("favoriteTemplateIDs")
+	private var favoriteTemplateIDsRaw = ""
+
+	private var favoriteTemplateIDs: Set<String> {
+		get {
+			Set(
+				favoriteTemplateIDsRaw
+					.split(separator: ",")
+					.map(String.init)
+			)
+		}
+		nonmutating set {
+			favoriteTemplateIDsRaw = newValue
+				.sorted()
+				.joined(separator: ",")
+		}
+	}
+
 	private var engine: SymbolEngine {
 		if let customMappings {
 			return SymbolEngine(unicodeMappings: customMappings)
@@ -57,15 +75,34 @@ struct ContentView: View {
 	private var filteredTemplates: [ProofTemplate] {
 		let query = templateSearch.trimmingCharacters(in: .whitespacesAndNewlines)
 
-		guard !query.isEmpty else {
-			return templates
+		let source: [ProofTemplate]
+
+		if query.isEmpty {
+			source = templates
+		} else {
+			source = templates.filter { template in
+				template.trigger.localizedCaseInsensitiveContains(query)
+				|| template.title.localizedCaseInsensitiveContains(query)
+				|| template.body.localizedCaseInsensitiveContains(query)
+			}
 		}
 
-		return templates.filter { template in
-			template.trigger.localizedCaseInsensitiveContains(query)
-			|| template.title.localizedCaseInsensitiveContains(query)
-			|| template.body.localizedCaseInsensitiveContains(query)
+		return source.sorted { lhs, rhs in
+			let lhsFavorite = favoriteTemplateIDs.contains(lhs.id)
+			let rhsFavorite = favoriteTemplateIDs.contains(rhs.id)
+
+			if lhsFavorite != rhsFavorite {
+				return lhsFavorite && !rhsFavorite
+			}
+
+			return lhs.trigger < rhs.trigger
 		}
+	}
+
+	private var favoriteTemplates: [ProofTemplate] {
+		templates
+			.filter { favoriteTemplateIDs.contains($0.id) }
+			.sorted { $0.trigger < $1.trigger }
 	}
 
 	private var filteredSymbols: [SymbolMapping] {
@@ -187,60 +224,115 @@ struct ContentView: View {
 			.pickerStyle(.segmented)
 
 			if referencePanel == .templates {
-				Text("Proof Templates")
-					.font(.headline)
-
-				TextField("Search templates by trigger, title, or body...", text: $templateSearch)
-					.textFieldStyle(.roundedBorder)
-
-				List(filteredTemplates) { template in
-					Button {
-						insertionRequest = template.body
-					} label: {
-						VStack(alignment: .leading, spacing: 4) {
-							Text("\(template.trigger) → \(template.title)")
-								.font(.headline)
-
-							Text(template.body)
-								.font(.caption)
-								.foregroundStyle(.secondary)
-								.lineLimit(2)
-						}
-						.padding(.vertical, 4)
-					}
-				}
-				.frame(height: 260)
-				.id(configReloadID)
+				templateReferencePanel
 			} else {
-				Text("Available Symbols")
-					.font(.headline)
-
-				TextField("Search symbols by shortcut or symbol...", text: $symbolSearch)
-					.textFieldStyle(.roundedBorder)
-
-				List(filteredSymbols) { item in
-					Button {
-						insertionRequest = item.symbol
-					} label: {
-						HStack {
-							Text(item.shortcut)
-								.frame(width: 120, alignment: .leading)
-
-							Text("→")
-
-							Text(item.symbol)
-								.font(.title3)
-						}
-					}
-				}
-				.frame(height: 260)
-				.id(configReloadID)
+				symbolReferencePanel
 			}
 
 			Spacer()
 		}
 		.padding()
-		.frame(width: 760, height: 740)
+		.frame(width: 760, height: 760)
+	}
+
+	private var templateReferencePanel: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Text("Proof Templates")
+				.font(.headline)
+
+			TextField("Search templates by trigger, title, or body...", text: $templateSearch)
+				.textFieldStyle(.roundedBorder)
+
+			if !favoriteTemplates.isEmpty && templateSearch.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+				Text("Favorites")
+					.font(.subheadline)
+					.foregroundStyle(.secondary)
+
+				ScrollView(.horizontal) {
+					HStack {
+						ForEach(favoriteTemplates) { template in
+							Button("★ \(template.trigger)") {
+								insertionRequest = template.body
+							}
+						}
+					}
+				}
+			}
+
+			List(filteredTemplates) { template in
+				templateRow(template)
+			}
+			.frame(height: 260)
+			.id(configReloadID)
+		}
+	}
+
+	private var symbolReferencePanel: some View {
+		VStack(alignment: .leading, spacing: 8) {
+			Text("Available Symbols")
+				.font(.headline)
+
+			TextField("Search symbols by shortcut or symbol...", text: $symbolSearch)
+				.textFieldStyle(.roundedBorder)
+
+			List(filteredSymbols) { item in
+				Button {
+					insertionRequest = item.symbol
+				} label: {
+					HStack {
+						Text(item.shortcut)
+							.frame(width: 120, alignment: .leading)
+
+						Text("→")
+
+						Text(item.symbol)
+							.font(.title3)
+					}
+				}
+			}
+			.frame(height: 260)
+			.id(configReloadID)
+		}
+	}
+
+	private func templateRow(_ template: ProofTemplate) -> some View {
+		HStack(alignment: .top) {
+			Button {
+				toggleFavorite(template)
+			} label: {
+				Text(favoriteTemplateIDs.contains(template.id) ? "★" : "☆")
+					.font(.title3)
+			}
+			.buttonStyle(.plain)
+
+			Button {
+				insertionRequest = template.body
+			} label: {
+				VStack(alignment: .leading, spacing: 4) {
+					Text("\(template.trigger) → \(template.title)")
+						.font(.headline)
+
+					Text(template.body)
+						.font(.caption)
+						.foregroundStyle(.secondary)
+						.lineLimit(2)
+				}
+				.padding(.vertical, 4)
+			}
+			.buttonStyle(.plain)
+		}
+	}
+
+	private func toggleFavorite(_ template: ProofTemplate) {
+		var ids = favoriteTemplateIDs
+
+		if ids.contains(template.id) {
+			ids.remove(template.id)
+		} else {
+			ids.insert(template.id)
+		}
+
+		favoriteTemplateIDs = ids
 	}
 
 	private func reloadConfig() {
