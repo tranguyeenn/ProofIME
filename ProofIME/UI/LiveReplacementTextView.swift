@@ -169,11 +169,11 @@ final class ProofTextView: NSTextView {
 
 		let cursorPosition = selectedRange().location
 
-		let controller = LiveReplacementController(
+		let processor = TokenProcessor(
 			replacementEngine: replacementEngine
 		)
 
-		let result = controller.processTrigger(
+		let result = processor.process(
 			text: string,
 			cursorPosition: cursorPosition,
 			trigger: trigger
