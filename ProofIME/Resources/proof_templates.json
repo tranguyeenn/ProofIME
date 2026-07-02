@@ -1,26 +1,68 @@
 [
-	{
-		"id": "contradiction",
-		"trigger": "contr",
-		"title": "Proof by Contradiction",
-		"body": "Assume the opposite.\n\nThis leads to a contradiction.\n\nTherefore, the original statement is true."
-	},
-	{
-		"id": "contrapositive",
-		"trigger": "contra",
-		"title": "Proof by Contrapositive",
-		"body": "We prove the contrapositive.\n\nAssume the conclusion is false.\n\nThen the hypothesis is false.\n\nTherefore, the original implication is true."
-	},
-	{
-		"id": "induction",
-		"trigger": "ind",
-		"title": "Proof by Induction",
-		"body": "Base case:\n\nInductive hypothesis:\nAssume the statement is true for n = k.\n\nInductive step:\nShow the statement is true for n = k + 1.\n\nTherefore, the statement is true for all valid n."
-	},
-	{
-		"id": "direct",
-		"trigger": "direct",
-		"title": "Direct Proof",
-		"body": "Assume the hypothesis.\n\nUsing the definitions, we show the conclusion.\n\nTherefore, the statement is true."
-	}
+  {
+	"id": "direct",
+	"trigger": "direct",
+	"title": "Direct Proof",
+	"body": "Proof:\nLet <#objects#> be <#type/universe#>.\nAssume <#hypothesis#>.\n\n<#work using definitions/theorems#>\n\nTherefore, <#conclusion#>.\nThus, <#statement#>."
+  },
+  {
+	"id": "contrapositive",
+	"trigger": "contra",
+	"title": "Proof by Contrapositive",
+	"body": "Proof by contrapositive:\nAssume <#negation of conclusion#>.\n\n<#work#>\n\nTherefore, <#negation of hypothesis#>.\nThus, by contraposition, <#original implication#>."
+  },
+  {
+	"id": "contradiction",
+	"trigger": "contr",
+	"title": "Proof by Contradiction",
+	"body": "Proof by contradiction:\nSuppose <#negation of statement#>.\n\n<#work#>\n\nThis is a contradiction.\nTherefore, <#statement#>."
+  },
+  {
+	"id": "cases",
+	"trigger": "cases",
+	"title": "Proof by Cases",
+	"body": "Proof by cases:\n\nCase 1: <#case 1 condition#>.\n<#work#>\n\nCase 2: <#case 2 condition#>.\n<#work#>\n\nHence, in all cases, <#conclusion#>."
+  },
+  {
+	"id": "biconditional",
+	"trigger": "iff",
+	"title": "Biconditional Proof",
+	"body": "Proof:\nWe prove both directions.\n\n(→) Assume <#left statement#>.\n<#work#>\nTherefore, <#right statement#>.\n\n(←) Assume <#right statement#>.\n<#work#>\nTherefore, <#left statement#>.\n\nThus, <#left statement#> if and only if <#right statement#>."
+  },
+  {
+	"id": "forall-direct",
+	"trigger": "forall",
+	"title": "Universal Proof",
+	"body": "Proof:\nLet <#variable#> be an arbitrary element of <#universe#>.\n\n<#work#>\n\nTherefore, <#predicate#> is true.\nSince <#variable#> was arbitrary, <#universal statement#>."
+  },
+  {
+	"id": "exists-constructive",
+	"trigger": "exists",
+	"title": "Constructive Existence Proof",
+	"body": "Proof:\nChoose <#specific object#>.\n\nFirst, verify <#object#> is in <#universe#>.\n\n<#work showing predicate is true#>\n\nTherefore, there exists <#variable#> such that <#predicate#>."
+  },
+  {
+	"id": "unique-existence",
+	"trigger": "unique",
+	"title": "Unique Existence Proof",
+	"body": "Proof:\nFirst, prove existence.\nChoose <#object#>.\n<#show object satisfies condition#>\n\nNow prove uniqueness.\nSuppose <#y#> and <#z#> both satisfy <#condition#>.\n\n<#work#>\n\nTherefore, <#y#> = <#z#>.\nThus, there exists a unique <#object#> such that <#condition#>."
+  },
+  {
+	"id": "subset",
+	"trigger": "subset",
+	"title": "Subset Proof",
+	"body": "Proof:\nLet <#x#> be arbitrary.\nAssume <#x#> ∈ <#A#>.\n\n<#work#>\n\nTherefore, <#x#> ∈ <#B#>.\nThus, <#A#> ⊆ <#B#>."
+  },
+  {
+	"id": "set-equality",
+	"trigger": "seteq",
+	"title": "Set Equality Proof",
+	"body": "Proof:\nWe prove both inclusions.\n\n1) Prove <#A#> ⊆ <#B#>.\nLet <#x#> ∈ <#A#>.\n<#work#>\nTherefore, <#x#> ∈ <#B#>.\n\n2) Prove <#B#> ⊆ <#A#>.\nLet <#x#> ∈ <#B#>.\n<#work#>\nTherefore, <#x#> ∈ <#A#>.\n\nThus, <#A#> = <#B#>."
+  },
+  {
+	"id": "divisibility",
+	"trigger": "divides",
+	"title": "Divisibility Proof",
+	"body": "Proof:\nLet <#a#>, <#b#>, and <#c#> be integers.\nAssume <#divisibility hypothesis#>.\n\nBy definition of divisibility, there exist integers <#k#> and <#m#> such that\n<#equations#>.\n\n<#substitution work#>\n\nTherefore, <#divisibility conclusion#>."
+  }
 ]
