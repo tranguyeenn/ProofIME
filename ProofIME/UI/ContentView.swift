@@ -9,13 +9,6 @@ enum ReferencePanel: String, CaseIterable, Identifiable {
 	var id: String { rawValue }
 }
 
-private struct CandidateOption: Identifiable, Hashable {
-	let id = UUID()
-	let token: String
-	let replacement: String
-	let label: String
-}
-
 struct ContentView: View {
 
 	@State private var input = ""
@@ -35,6 +28,7 @@ struct ContentView: View {
 	@State private var candidateRankRefreshID = UUID()
 
 	private let usageStore = CandidateUsageStore()
+	private let candidateProvider = CandidateProvider()
 
 	@AppStorage("favoriteTemplateIDs")
 	private var favoriteTemplateIDsRaw = ""
@@ -150,42 +144,18 @@ struct ContentView: View {
 			return []
 		}
 
-		var options: [CandidateOption] = [
-			CandidateOption(
-				token: candidate.token,
-				replacement: candidate.replacement,
-				label: "default"
+		let options = candidateProvider.candidates(
+			for: candidate
+		)
+
+		return options.sorted { lhs, rhs in
+			let lhsCount = usageStore.usageCount(
+				for: lhs.replacement
 			)
-		]
 
-		if candidate.token == "fa" {
-			options.append(contentsOf: [
-				CandidateOption(token: candidate.token, replacement: "∧", label: "and"),
-				CandidateOption(token: candidate.token, replacement: "⇒", label: "implies")
-			])
-		}
-
-		if candidate.token == "and" {
-			options.append(contentsOf: [
-				CandidateOption(token: candidate.token, replacement: "∩", label: "intersection"),
-				CandidateOption(token: candidate.token, replacement: "∧", label: "logical and")
-			])
-		}
-
-		var seen = Set<String>()
-
-		let uniqueOptions = options.filter { option in
-			if seen.contains(option.replacement) {
-				return false
-			}
-
-			seen.insert(option.replacement)
-			return true
-		}
-
-		return uniqueOptions.sorted { lhs, rhs in
-			let lhsCount = usageStore.usageCount(for: lhs.replacement)
-			let rhsCount = usageStore.usageCount(for: rhs.replacement)
+			let rhsCount = usageStore.usageCount(
+				for: rhs.replacement
+			)
 
 			if lhsCount != rhsCount {
 				return lhsCount > rhsCount
