@@ -17,8 +17,7 @@ struct ContentView: View {
 
 	@State private var customMappings: [String: String]? = nil
 	@State private var configReloadID = UUID()
-
-	private let templateEngine = TemplateEngine()
+	@State private var insertionRequest: String? = nil
 
 	private var engine: SymbolEngine {
 		if let customMappings {
@@ -49,16 +48,10 @@ struct ContentView: View {
 	}
 
 	private var templates: [ProofTemplate] {
-		ProofTemplateLoader.loadTemplateList()
+		ProofTemplateLoader.loadTemplates()
 	}
 
 	private var output: String {
-		let expandedTemplate = templateEngine.expand(input)
-
-		if expandedTemplate != input {
-			return expandedTemplate
-		}
-
 		if let directReplacement = replacementEngine.replacement(for: input) {
 			return directReplacement
 		}
@@ -114,6 +107,7 @@ struct ContentView: View {
 
 			LiveReplacementTextView(
 				text: $input,
+				insertionRequest: $insertionRequest,
 				replacementEngine: replacementEngine
 			)
 			.frame(height: 100)
@@ -161,8 +155,8 @@ struct ContentView: View {
 					.font(.headline)
 
 				List(templates) { template in
-					Button("/template \(template.name)") {
-						input = "/template \(template.name)"
+					Button("\(template.trigger) → \(template.title)") {
+						insertionRequest = template.body
 					}
 				}
 				.frame(height: 260)
@@ -172,14 +166,18 @@ struct ContentView: View {
 					.font(.headline)
 
 				List(symbols) { item in
-					HStack {
-						Text(item.shortcut)
-							.frame(width: 120, alignment: .leading)
+					Button {
+						insertionRequest = item.symbol
+					} label: {
+						HStack {
+							Text(item.shortcut)
+								.frame(width: 120, alignment: .leading)
 
-						Text("→")
+							Text("→")
 
-						Text(item.symbol)
-							.font(.title3)
+							Text(item.symbol)
+								.font(.title3)
+						}
 					}
 				}
 				.frame(height: 260)

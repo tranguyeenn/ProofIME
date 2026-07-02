@@ -7,24 +7,18 @@
 
 import Foundation
 
-struct TemplateEngine {
-	private let templates: [String: String]
+final class TemplateEngine {
+	private let templates: [ProofTemplate]
 
-	init(
-		templates: [String: String] = ProofTemplateLoader.loadTemplates()
-	) {
+	init(templates: [ProofTemplate] = ProofTemplateLoader.loadTemplates()) {
 		self.templates = templates
 	}
 
-	func expand(_ text: String) -> String {
-		guard text.hasPrefix("/template ") else {
-			return text
-		}
+	func template(for trigger: String) -> ProofTemplate? {
+		templates.first { $0.trigger == trigger }
+	}
 
-		let key = text
-			.replacingOccurrences(of: "/template ", with: "")
-			.trimmingCharacters(in: .whitespacesAndNewlines)
-
-		return templates[key] ?? text
+	func expansion(for trigger: String) -> String? {
+		template(for: trigger)?.body
 	}
 }

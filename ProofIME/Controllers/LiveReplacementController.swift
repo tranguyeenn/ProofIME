@@ -1,5 +1,4 @@
 // Controllers/LiveReplacementController.swift
-
 import Foundation
 
 struct ReplacementResult {
@@ -11,9 +10,14 @@ struct ReplacementResult {
 final class LiveReplacementController {
 
 	private let replacementEngine: ReplacementEngine
+	private let templateEngine: TemplateEngine
 
-	init(replacementEngine: ReplacementEngine) {
+	init(
+		replacementEngine: ReplacementEngine,
+		templateEngine: TemplateEngine = TemplateEngine()
+	) {
 		self.replacementEngine = replacementEngine
+		self.templateEngine = templateEngine
 	}
 
 	func processTrigger(
@@ -44,31 +48,42 @@ final class LiveReplacementController {
 
 		let token = String(prefix[tokenRange])
 
-		guard let replacement = replacementEngine.replacement(for: token) else {
-			let newText = prefix + trigger + suffix
+		if let template = templateEngine.expansion(for: token) {
+			let beforeToken = String(prefix[..<tokenRange.lowerBound])
+			let newText = beforeToken + template + trigger + suffix
+			let newCursorPosition = beforeToken.count + template.count + trigger.count
+
 			return ReplacementResult(
 				text: newText,
-				cursorPosition: cursorPosition + trigger.count,
-				didReplace: false
+				cursorPosition: newCursorPosition,
+				didReplace: true
 			)
 		}
 
-		let beforeToken = String(prefix[..<tokenRange.lowerBound])
-		let newText = beforeToken + replacement + trigger + suffix
-		let newCursorPosition = beforeToken.count + replacement.count + trigger.count
+		if let replacement = replacementEngine.replacement(for: token) {
+			let beforeToken = String(prefix[..<tokenRange.lowerBound])
+			let newText = beforeToken + replacement + trigger + suffix
+			let newCursorPosition = beforeToken.count + replacement.count + trigger.count
 
+			return ReplacementResult(
+				text: newText,
+				cursorPosition: newCursorPosition,
+				didReplace: true
+			)
+		}
+
+		let newText = prefix + trigger + suffix
 		return ReplacementResult(
 			text: newText,
-			cursorPosition: newCursorPosition,
-			didReplace: true
+			cursorPosition: cursorPosition + trigger.count,
+			didReplace: false
 		)
 	}
 
 	private func findTokenRange(in text: String) -> Range<String.Index>? {
 		guard !text.isEmpty else { return nil }
 
-		var endIndex = text.endIndex
-		var startIndex = endIndex
+		var startIndex = text.endIndex
 
 		while startIndex > text.startIndex {
 			let previousIndex = text.index(before: startIndex)
@@ -81,8 +96,7 @@ final class LiveReplacementController {
 			startIndex = previousIndex
 		}
 
-		guard startIndex < endIndex else { return nil }
-
-		return startIndex..<endIndex
+		guard startIndex < text.endIndex else { return nil }
+		return startIndex..<text.endIndex
 	}
 }

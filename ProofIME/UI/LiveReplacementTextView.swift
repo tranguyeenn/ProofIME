@@ -8,6 +8,7 @@ import AppKit
 
 struct LiveReplacementTextView: NSViewRepresentable {
 	@Binding var text: String
+	@Binding var insertionRequest: String?
 
 	let replacementEngine: ReplacementEngine
 
@@ -40,6 +41,14 @@ struct LiveReplacementTextView: NSViewRepresentable {
 		if textView.string != text {
 			textView.string = text
 		}
+
+		if let insertionRequest {
+			textView.insertTextAtCursor(insertionRequest)
+			DispatchQueue.main.async {
+				self.text = textView.string
+				self.insertionRequest = nil
+			}
+		}
 	}
 
 	func makeCoordinator() -> Coordinator {
@@ -66,6 +75,17 @@ struct LiveReplacementTextView: NSViewRepresentable {
 final class ProofTextView: NSTextView {
 	var replacementEngine: ReplacementEngine?
 	var onTextChange: ((String) -> Void)?
+
+	func insertTextAtCursor(_ insertedText: String) {
+		let range = selectedRange()
+
+		if let textStorage {
+			textStorage.replaceCharacters(in: range, with: insertedText)
+			let newCursorPosition = range.location + insertedText.count
+			setSelectedRange(NSRange(location: newCursorPosition, length: 0))
+			onTextChange?(string)
+		}
+	}
 
 	override func keyDown(with event: NSEvent) {
 		guard let characters = event.charactersIgnoringModifiers else {

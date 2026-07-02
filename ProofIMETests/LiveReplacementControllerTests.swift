@@ -28,6 +28,6 @@ struct LiveReplacementControllerTests {
 		)
 
 		#expect(result.text == "∀ ")
-		#expect(result.didReplace)
+		#expect(result.didReplace == true)
 	}
 }

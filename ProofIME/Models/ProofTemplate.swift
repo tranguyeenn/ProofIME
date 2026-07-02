@@ -7,8 +7,9 @@
 
 import Foundation
 
-struct ProofTemplate: Identifiable {
-	let id = UUID()
-	let name: String
+struct ProofTemplate: Codable, Identifiable {
+	let id: String
+	let trigger: String
+	let title: String
 	let body: String
 }
