@@ -86,30 +86,25 @@ function matcher.new(options)
     end
   end
 
-  function instance:loadLegacyRules()
+  function instance:applyRules(rules)
+    self.rules = rules or {}
+    self:updateMaxTriggerLength()
+  end
+
+  function instance:buildLegacyRules()
     -- TODO: Remove symbols.json fallback after categorized rules are the only supported format.
     local rawRules, errorMessage = utils.readJson(self.rulesPath)
 
     if not rawRules then
-      self.log:e("Could not load rules from " .. self.rulesPath .. ": " .. tostring(errorMessage))
-      self.rules = {}
-      self.maxTriggerLength = 0
-      return false
+      return nil, "Could not load rules from " .. self.rulesPath .. ": " .. tostring(errorMessage)
     end
 
     local normalizedRules = normalizeRules(rawRules)
     if not normalizedRules then
-      self.log:e("Legacy rules file at " .. self.rulesPath .. " is not a valid rule object")
-      self.rules = {}
-      self.maxTriggerLength = 0
-      return false
+      return nil, "Legacy rules file at " .. self.rulesPath .. " is not a valid rule object"
     end
 
-    self.rules = normalizedRules
-    self:updateMaxTriggerLength()
-
-    self.log:i("Loaded " .. tostring(utils.countTable(self.rules)) .. " ProofIME rules from legacy symbols.json")
-    return true
+    return normalizedRules, nil, {}
   end
 
   function instance:loadCategory(category)
@@ -117,68 +112,85 @@ function matcher.new(options)
     local rawRules, errorMessage = utils.readJson(path)
 
     if not rawRules then
-      self.log:w("Skipping rule category '" .. category .. "' at " .. path .. ": " .. tostring(errorMessage))
-      return nil
+      return nil, "Could not load rule category '" .. category .. "' at " .. path .. ": " .. tostring(errorMessage)
     end
 
     local normalizedRules = normalizeRules(rawRules)
     if not normalizedRules then
-      self.log:w("Skipping rule category '" .. category .. "' at " .. path .. ": expected a JSON object")
-      return nil
+      return nil, "Rule category '" .. category .. "' at " .. path .. " is not a valid rule object"
     end
 
     return normalizedRules
   end
 
-  function instance:loadRules()
+  function instance:buildRules()
     if not utils.fileExists(self.indexPath) then
       self.log:w("Rules index not found at " .. self.indexPath .. "; falling back to legacy symbols.json")
-      return self:loadLegacyRules()
+      return self:buildLegacyRules()
     end
 
     local index, errorMessage = utils.readJson(self.indexPath)
 
     if not index then
-      self.log:w("Rules index at " .. self.indexPath .. " is invalid: " .. tostring(errorMessage))
-      self.rules = {}
-      self.maxTriggerLength = 0
-      return false
+      return nil, "Rules index at " .. self.indexPath .. " is invalid: " .. tostring(errorMessage)
     end
+
+    self.log:i("Rules index loaded from " .. self.indexPath)
 
     local categories = enabledCategories(index)
     if not categories then
-      self.log:w("Rules index at " .. self.indexPath .. " has no valid enabled category list")
-      self.rules = {}
-      self.maxTriggerLength = 0
-      return false
+      return nil, "Rules index at " .. self.indexPath .. " has no valid enabled category list"
     end
 
     local mergedRules = {}
     local loadedCategories = {}
 
     for _, category in ipairs(categories) do
-      local categoryRules = self:loadCategory(category)
+      local categoryRules, categoryError = self:loadCategory(category)
 
-      if categoryRules then
-        for trigger, replacement in pairs(categoryRules) do
-          mergedRules[trigger] = replacement
-        end
-
-        table.insert(loadedCategories, category)
+      if not categoryRules then
+        return nil, categoryError
       end
+
+      for trigger, replacement in pairs(categoryRules) do
+        mergedRules[trigger] = replacement
+      end
+
+      table.insert(loadedCategories, category)
     end
 
-    self.rules = mergedRules
-    self:updateMaxTriggerLength()
+    self.log:i("Enabled rule categories loaded: " .. table.concat(loadedCategories, ", "))
+    return mergedRules, nil, loadedCategories
+  end
+
+  function instance:loadRules()
+    local rules, errorMessage, loadedCategories = self:buildRules()
+
+    if not rules then
+      self.log:e("Rule load failed: " .. tostring(errorMessage))
+      self:applyRules({})
+      return {
+        ok = false,
+        ruleCount = 0,
+        error = errorMessage,
+      }
+    end
+
+    self:applyRules(rules)
 
     self.log:i(
       "Loaded "
         .. tostring(utils.countTable(self.rules))
         .. " ProofIME rules from categories: "
-        .. table.concat(loadedCategories, ", ")
+        .. table.concat(loadedCategories or {}, ", ")
     )
+    self.log:i("Active rule count: " .. tostring(utils.countTable(self.rules)))
 
-    return true
+    return {
+      ok = true,
+      ruleCount = utils.countTable(self.rules),
+      error = nil,
+    }
   end
 
   function instance:findMatch(bufferValue)
@@ -238,7 +250,30 @@ function matcher.new(options)
   end
 
   function instance:reload()
-    return self:loadRules()
+    self.log:i("Rule reload started")
+    local rules, errorMessage, loadedCategories = self:buildRules()
+
+    if not rules then
+      self.log:e("Rule reload failed: " .. tostring(errorMessage))
+      self.log:i("Keeping previous active rule set with " .. tostring(utils.countTable(self.rules)) .. " rules")
+      return {
+        ok = false,
+        ruleCount = utils.countTable(self.rules),
+        error = errorMessage,
+      }
+    end
+
+    self:applyRules(rules)
+
+    self.log:i("Rule reload categories: " .. table.concat(loadedCategories or {}, ", "))
+    self.log:i("Rule reload count: " .. tostring(utils.countTable(self.rules)))
+    self.log:i("Rule reload succeeded")
+
+    return {
+      ok = true,
+      ruleCount = utils.countTable(self.rules),
+      error = nil,
+    }
   end
 
   instance:loadRules()

@@ -17,6 +17,11 @@ config.toggleHotkey = {
   key = "p",
 }
 
+config.reloadHotkey = {
+  mods = { "cmd", "ctrl", "alt" },
+  key = "r",
+}
+
 local source = debug.getinfo(1, "S").source
 local directory = utils.dirnameFromSource(source) or (hs.configdir .. "/proofime/hammerspoon/")
 

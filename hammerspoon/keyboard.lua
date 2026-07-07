@@ -24,9 +24,11 @@ function keyboard.new(options)
     log = options.log,
     ignoredApplications = options.ignoredApplications or {},
     toggleHotkey = options.toggleHotkey,
+    reloadHotkey = options.reloadHotkey,
     triggerPrefix = options.triggerPrefix or "",
     eventtap = nil,
     hotkey = nil,
+    reloadHotkeyBinding = nil,
   }
 
   function instance:setEnabled(enabled)
@@ -37,6 +39,29 @@ function keyboard.new(options)
 
   function instance:toggle()
     self:setEnabled(not self.enabled)
+  end
+
+  function instance:showReloadSuccess(ruleCount)
+    hs.alert.show("ProofIME: Reloaded " .. tostring(ruleCount) .. " rules", 1.5)
+  end
+
+  function instance:showReloadFailure()
+    hs.alert.show("ProofIME: Reload failed", 2)
+  end
+
+  function instance:reloadRules()
+    self.log:i("Rule reload started from keyboard hotkey")
+    local result = self.engine:reloadRules()
+
+    if result.ok then
+      self.engine:clear()
+      self.log:i("Rule reload succeeded from keyboard hotkey")
+      self.log:i("Rule reload count from keyboard hotkey: " .. tostring(result.ruleCount))
+      self:showReloadSuccess(result.ruleCount)
+    else
+      self.log:e("Rule reload failed from keyboard hotkey: " .. tostring(result.error))
+      self:showReloadFailure()
+    end
   end
 
   function instance:isIgnoredApplication()
@@ -87,6 +112,11 @@ function keyboard.new(options)
   end
 
   function instance:start()
+    if self.eventtap then
+      self.log:w("ProofIME keyboard watcher already started")
+      return
+    end
+
     self.eventtap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
       return self:handleKey(event)
     end)
@@ -96,6 +126,12 @@ function keyboard.new(options)
     if self.toggleHotkey then
       self.hotkey = hs.hotkey.bind(self.toggleHotkey.mods, self.toggleHotkey.key, function()
         self:toggle()
+      end)
+    end
+
+    if self.reloadHotkey then
+      self.reloadHotkeyBinding = hs.hotkey.bind(self.reloadHotkey.mods, self.reloadHotkey.key, function()
+        self:reloadRules()
       end)
     end
 
@@ -111,6 +147,11 @@ function keyboard.new(options)
     if self.hotkey then
       self.hotkey:delete()
       self.hotkey = nil
+    end
+
+    if self.reloadHotkeyBinding then
+      self.reloadHotkeyBinding:delete()
+      self.reloadHotkeyBinding = nil
     end
   end
 

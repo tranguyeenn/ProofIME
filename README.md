@@ -62,6 +62,8 @@ Reload Hammerspoon. Type a trigger such as `:fa`; the backend sends backspaces f
 
 The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written through Hammerspoon's console under the `ProofIME` logger.
 
+Press `cmd` + `ctrl` + `alt` + `r` to reload `rules/index.json` and all enabled rule categories without restarting Hammerspoon. An on-screen alert reports `ProofIME: Reloaded X rules` on success. If reload fails, ProofIME keeps the previous working rule set active, shows `ProofIME: Reload failed`, and writes the detailed error to the Hammerspoon log.
+
 ## Configuration
 
 Symbol rules are split into category files under `rules/`:

@@ -41,6 +41,7 @@ local keyboardListener = keyboard.new({
   log = log,
   ignoredApplications = config.ignoredApplications,
   toggleHotkey = config.toggleHotkey,
+  reloadHotkey = config.reloadHotkey,
   triggerPrefix = config.triggerPrefix,
 })
 
