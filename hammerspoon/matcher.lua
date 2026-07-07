@@ -27,6 +27,25 @@ local function categoryPath(rulesDirectory, category)
   return rulesDirectory .. category .. ".json"
 end
 
+local function lastPlainMatch(value, needle)
+  if type(value) ~= "string" or type(needle) ~= "string" or needle == "" then
+    return nil
+  end
+
+  local lastStart = nil
+  local startIndex = 1
+
+  while true do
+    local matchStart = value:find(needle, startIndex, true)
+    if not matchStart then
+      return lastStart
+    end
+
+    lastStart = matchStart
+    startIndex = matchStart + #needle
+  end
+end
+
 local function enabledCategories(index)
   if type(index) ~= "table" or type(index.enabled) ~= "table" then
     return nil
@@ -49,6 +68,8 @@ function matcher.new(options)
     rulesDirectory = directoryForPath(options.rulesPath) or "",
     indexPath = (directoryForPath(options.rulesPath) or "") .. "index.json",
     log = options.log,
+    triggerPrefix = options.triggerPrefix or "",
+    requireTriggerPrefix = options.requireTriggerPrefix == true,
     rules = {},
     maxTriggerLength = 0,
   }
@@ -58,6 +79,10 @@ function matcher.new(options)
 
     for trigger, _ in pairs(self.rules) do
       self.maxTriggerLength = math.max(self.maxTriggerLength, #trigger)
+    end
+
+    if self.requireTriggerPrefix then
+      self.maxTriggerLength = self.maxTriggerLength + #self.triggerPrefix
     end
   end
 
@@ -157,22 +182,57 @@ function matcher.new(options)
   end
 
   function instance:findMatch(bufferValue)
+    self.log:d("Matcher raw buffer: '" .. tostring(bufferValue) .. "'")
+
+    local matchBuffer = bufferValue
+    local typedPrefix = ""
+
+    if self.requireTriggerPrefix then
+      local prefixStart = lastPlainMatch(bufferValue, self.triggerPrefix)
+
+      if not prefixStart then
+        self.log:d("Matcher prefix detection: missing prefix '" .. tostring(self.triggerPrefix) .. "'")
+        self.log:d("Matcher buffer after stripping prefix: nil")
+        self.log:d("Matcher rule matched: nil")
+        return nil
+      end
+
+      typedPrefix = self.triggerPrefix
+      matchBuffer = bufferValue:sub(prefixStart + #self.triggerPrefix)
+      self.log:d(
+        "Matcher prefix detection: found prefix '"
+          .. tostring(self.triggerPrefix)
+          .. "' at buffer index "
+          .. tostring(prefixStart)
+      )
+      self.log:d("Matcher buffer after stripping prefix: '" .. tostring(matchBuffer) .. "'")
+    else
+      self.log:d("Matcher prefix detection: disabled")
+      self.log:d("Matcher buffer after stripping prefix: '" .. tostring(matchBuffer) .. "'")
+    end
+
     local bestTrigger = nil
     local bestReplacement = nil
+    local bestTypedTrigger = nil
 
     for trigger, replacement in pairs(self.rules) do
-      if utils.endsWith(bufferValue, trigger) and (not bestTrigger or #trigger > #bestTrigger) then
+      if utils.endsWith(matchBuffer, trigger) and (not bestTrigger or #trigger > #bestTrigger) then
         bestTrigger = trigger
         bestReplacement = replacement
+        bestTypedTrigger = typedPrefix .. trigger
       end
     end
 
     if not bestTrigger then
+      self.log:d("Matcher rule matched: nil")
       return nil
     end
 
+    self.log:d("Matcher rule matched: '" .. bestTrigger .. "' -> '" .. bestReplacement .. "'")
+
     return {
-      trigger = bestTrigger,
+      trigger = bestTypedTrigger,
+      ruleTrigger = bestTrigger,
       replacement = bestReplacement,
     }
   end

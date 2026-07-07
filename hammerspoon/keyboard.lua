@@ -24,6 +24,7 @@ function keyboard.new(options)
     log = options.log,
     ignoredApplications = options.ignoredApplications or {},
     toggleHotkey = options.toggleHotkey,
+    triggerPrefix = options.triggerPrefix or "",
     eventtap = nil,
     hotkey = nil,
   }
@@ -76,7 +77,7 @@ function keyboard.new(options)
       return false
     end
 
-    if #text == 1 and text:match("[%w]") then
+    if #text == 1 and (text:match("[%w]") or text == self.triggerPrefix) then
       self.engine:handleCharacter(text)
     else
       self.engine:clear()

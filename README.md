@@ -11,14 +11,14 @@ The current goal is a Hammerspoon prototype that watches typed text, keeps a sma
 Examples:
 
 ```text
-fa  -> ∀
-ex  -> ∃
-imp -> →
-iff -> ↔
-and -> ∧
-or  -> ∨
-not -> ¬
-in  -> ∈
+:fa  -> ∀
+:ex  -> ∃
+:imp -> →
+:iff -> ↔
+:and -> ∧
+:or  -> ∨
+:not -> ¬
+:in  -> ∈
 ```
 
 Rules are data-driven through JSON now, with YAML as a planned format once the backend needs richer configuration.
@@ -58,7 +58,7 @@ package.path = package.path .. ";/Users/trangnguyen/dev/ProofIME/hammerspoon/?.l
 dofile("/Users/trangnguyen/dev/ProofIME/hammerspoon/init.lua")
 ```
 
-Reload Hammerspoon. Type a trigger such as `fa`; the backend sends backspaces for the trigger and inserts `∀`.
+Reload Hammerspoon. Type a trigger such as `:fa`; the backend sends backspaces for the full typed trigger and inserts `∀`.
 
 The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written through Hammerspoon's console under the `ProofIME` logger.
 
@@ -101,6 +101,15 @@ Remove a category name from `enabled` to disable it, then reload Hammerspoon. To
 ```
 
 `rules/symbols.json` is still kept temporarily as a legacy fallback if `rules/index.json` is missing.
+
+By default, live replacement requires the configured trigger prefix:
+
+```lua
+config.triggerPrefix = ":"
+config.requireTriggerPrefix = true
+```
+
+With that default, `:le` expands to `≤` and `:or` expands to `∨`, while normal prose such as `rules` and `categories` passes through. Set `config.requireTriggerPrefix = false` to preserve the earlier bare-trigger behavior.
 
 The Hammerspoon backend is split into small modules:
 

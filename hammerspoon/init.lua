@@ -15,6 +15,8 @@ local log = logger.new({
 local ruleMatcher = matcher.new({
   rulesPath = config.rulesPath,
   log = log,
+  triggerPrefix = config.triggerPrefix,
+  requireTriggerPrefix = config.requireTriggerPrefix,
 })
 
 local typedBuffer = buffer.new({
@@ -39,6 +41,7 @@ local keyboardListener = keyboard.new({
   log = log,
   ignoredApplications = config.ignoredApplications,
   toggleHotkey = config.toggleHotkey,
+  triggerPrefix = config.triggerPrefix,
 })
 
 keyboardListener:start()

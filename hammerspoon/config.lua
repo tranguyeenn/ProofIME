@@ -7,7 +7,8 @@ local config = {}
 config.enabled = true
 config.debug = false
 config.maxBufferLength = 16
-config.triggerPrefix = nil -- TODO: Support prefix-scoped matching modes.
+config.triggerPrefix = ":"
+config.requireTriggerPrefix = true
 config.ignoredApplications = {}
 config.replacementMode = "unicode"
 

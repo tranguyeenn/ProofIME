@@ -17,7 +17,10 @@ function replacer.new(options)
 
     -- TODO: Use replacementMode when alternate output modes are introduced.
     hs.timer.doAfter(0, function()
-      for _ = 1, #match.trigger do
+      local backspaceCount = #match.trigger
+      self.log:d("Replacement backspaces sent: " .. tostring(backspaceCount))
+
+      for _ = 1, backspaceCount do
         hs.eventtap.keyStroke({}, "delete", 0)
       end
 
