@@ -31,9 +31,15 @@ rules/
 
 hammerspoon/
 ├── init.lua
-├── engine.lua
+├── config.lua
 ├── keyboard.lua
-└── config.lua
+├── engine.lua
+├── buffer.lua
+├── matcher.lua
+├── replacer.lua
+├── logger.lua
+├── utils.lua
+└── ui.lua
 
 legacy/
 └── imk/
@@ -58,16 +64,56 @@ The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written thro
 
 ## Configuration
 
-Symbol rules live in `rules/symbols.json`:
+Symbol rules are split into category files under `rules/`:
+
+```text
+rules/
+├── index.json
+├── logic.json
+├── sets.json
+├── relations.json
+├── arrows.json
+├── greek.json
+└── calculus.json
+```
+
+`rules/index.json` controls which categories are loaded:
 
 ```json
 {
-  "fa": "∀",
-  "imp": "→"
+  "enabled": [
+    "logic",
+    "sets",
+    "relations",
+    "arrows",
+    "greek",
+    "calculus"
+  ]
 }
 ```
 
-Edit that file and reload Hammerspoon to change the active rules.
+Remove a category name from `enabled` to disable it, then reload Hammerspoon. To add a new category, create `rules/<category>.json` with trigger-to-symbol mappings and add `<category>` to the enabled list:
+
+```json
+{
+  "therefore": "∴"
+}
+```
+
+`rules/symbols.json` is still kept temporarily as a legacy fallback if `rules/index.json` is missing.
+
+The Hammerspoon backend is split into small modules:
+
+- `init.lua` wires modules together and starts keyboard listeners.
+- `config.lua` owns runtime knobs such as enabled state, debug logging, buffer length, ignored apps, replacement mode, and the toggle hotkey.
+- `keyboard.lua` adapts Hammerspoon key events into engine input.
+- `engine.lua` coordinates the buffer, matcher, and replacer.
+- `buffer.lua` maintains the rolling typed buffer.
+- `matcher.lua` loads enabled rule categories and finds the longest suffix match.
+- `replacer.lua` sends backspaces and inserts the replacement text.
+- `logger.lua` wraps Hammerspoon logging.
+- `utils.lua` contains shared string, JSON, and file helpers.
+- `ui.lua` is a placeholder for future candidate-window work.
 
 ## Legacy IMK Material
 

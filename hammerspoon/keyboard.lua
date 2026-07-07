@@ -1,15 +1,20 @@
+-- Keyboard event adapter. It translates Hammerspoon key events into engine input.
 local keyboard = {}
 
 local function hasCommandModifier(flags)
   return flags.cmd or flags.ctrl or flags.alt or flags.fn
 end
 
-local function trimBuffer(buffer, maxLength)
-  if #buffer <= maxLength then
-    return buffer
+local function isModifierOnly(text)
+  return not text or text == ""
+end
+
+local function applicationIdentifier(app)
+  if not app then
+    return nil
   end
 
-  return buffer:sub(-maxLength)
+  return app:bundleID() or app:name()
 end
 
 function keyboard.new(options)
@@ -17,42 +22,39 @@ function keyboard.new(options)
     enabled = options.enabled,
     engine = options.engine,
     log = options.log,
-    buffer = "",
-    bufferMaxLength = options.bufferMaxLength,
+    ignoredApplications = options.ignoredApplications or {},
+    toggleHotkey = options.toggleHotkey,
     eventtap = nil,
-    replacing = false,
+    hotkey = nil,
   }
 
   function instance:setEnabled(enabled)
     self.enabled = enabled
-    self.buffer = ""
-    self.log.i("ProofIME " .. (enabled and "enabled" or "disabled"))
+    self.engine:clear()
+    self.log:i("ProofIME " .. (enabled and "enabled" or "disabled"))
   end
 
   function instance:toggle()
     self:setEnabled(not self.enabled)
   end
 
-  function instance:replace(match)
-    self.replacing = true
+  function instance:isIgnoredApplication()
+    local identifier = applicationIdentifier(hs.application.frontmostApplication())
+    if not identifier then
+      return false
+    end
 
-    hs.timer.doAfter(0, function()
-      for _ = 1, #match.trigger do
-        hs.eventtap.keyStroke({}, "delete", 0)
+    for _, ignored in ipairs(self.ignoredApplications) do
+      if identifier == ignored then
+        return true
       end
+    end
 
-      hs.eventtap.keyStrokes(match.replacement)
-      self.buffer = ""
-      self.log.d("Expanded '" .. match.trigger .. "' to '" .. match.replacement .. "'")
-
-      hs.timer.doAfter(0.05, function()
-        self.replacing = false
-      end)
-    end)
+    return false
   end
 
   function instance:handleKey(event)
-    if not self.enabled or self.replacing then
+    if not self.enabled or self.engine:isReplacing() or self:isIgnoredApplication() then
       return false
     end
 
@@ -61,24 +63,23 @@ function keyboard.new(options)
     local text = event:getCharacters()
 
     if keyCode == hs.keycodes.map.delete then
-      self.buffer = self.buffer:sub(1, -2)
+      self.engine:handleDelete()
       return false
     end
 
-    if hasCommandModifier(flags) or not text or #text ~= 1 then
-      self.buffer = ""
+    if isModifierOnly(text) then
       return false
     end
 
-    if text:match("[%w]") then
-      self.buffer = trimBuffer(self.buffer .. text, self.bufferMaxLength)
-      local match = self.engine:match(self.buffer)
+    if hasCommandModifier(flags) then
+      self.engine:clear()
+      return false
+    end
 
-      if match then
-        self:replace(match)
-      end
+    if #text == 1 and text:match("[%w]") then
+      self.engine:handleCharacter(text)
     else
-      self.buffer = ""
+      self.engine:clear()
     end
 
     return false
@@ -90,7 +91,26 @@ function keyboard.new(options)
     end)
 
     self.eventtap:start()
-    self.log.i("ProofIME keyboard watcher started")
+
+    if self.toggleHotkey then
+      self.hotkey = hs.hotkey.bind(self.toggleHotkey.mods, self.toggleHotkey.key, function()
+        self:toggle()
+      end)
+    end
+
+    self.log:i("ProofIME keyboard watcher started")
+  end
+
+  function instance:stop()
+    if self.eventtap then
+      self.eventtap:stop()
+      self.eventtap = nil
+    end
+
+    if self.hotkey then
+      self.hotkey:delete()
+      self.hotkey = nil
+    end
   end
 
   return instance

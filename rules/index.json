@@ -1,0 +1,10 @@
+{
+  "enabled": [
+    "logic",
+    "sets",
+    "relations",
+    "arrows",
+    "greek",
+    "calculus"
+  ]
+}

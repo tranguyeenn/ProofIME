@@ -1,8 +1,15 @@
+-- Central configuration for the Hammerspoon backend.
+-- Keep runtime knobs here so the other modules can stay small and focused.
+local utils = require("utils")
+
 local config = {}
 
 config.enabled = true
-config.bufferMaxLength = 16
-config.logLevel = "info"
+config.debug = false
+config.maxBufferLength = 16
+config.triggerPrefix = nil -- TODO: Support prefix-scoped matching modes.
+config.ignoredApplications = {}
+config.replacementMode = "unicode"
 
 config.toggleHotkey = {
   mods = { "cmd", "alt", "ctrl" },
@@ -10,8 +17,7 @@ config.toggleHotkey = {
 }
 
 local source = debug.getinfo(1, "S").source
-local directory = source:sub(1, 1) == "@" and source:sub(2):match("(.*/)")
-  or hs.configdir .. "/proofime/hammerspoon/"
+local directory = utils.dirnameFromSource(source) or (hs.configdir .. "/proofime/hammerspoon/")
 
 config.rulesPath = directory .. "../rules/symbols.json"
 

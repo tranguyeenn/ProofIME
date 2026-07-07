@@ -1,22 +1,46 @@
+-- Hammerspoon entrypoint. It wires modules together and starts listeners.
 local config = require("config")
+local logger = require("logger")
+local buffer = require("buffer")
+local matcher = require("matcher")
+local replacer = require("replacer")
+local engine = require("engine")
+local keyboard = require("keyboard")
 
-local log = hs.logger.new("ProofIME", config.logLevel)
-local engine = require("engine").new({
+local log = logger.new({
+  name = "ProofIME",
+  debug = config.debug,
+})
+
+local ruleMatcher = matcher.new({
   rulesPath = config.rulesPath,
   log = log,
 })
 
-local keyboard = require("keyboard").new({
-  enabled = config.enabled,
-  engine = engine,
-  log = log,
-  bufferMaxLength = math.max(config.bufferMaxLength, engine.maxTriggerLength),
+local typedBuffer = buffer.new({
+  maxLength = math.max(config.maxBufferLength, ruleMatcher.maxTriggerLength),
 })
 
-keyboard:start()
+local textReplacer = replacer.new({
+  log = log,
+  mode = config.replacementMode,
+})
 
-hs.hotkey.bind(config.toggleHotkey.mods, config.toggleHotkey.key, function()
-  keyboard:toggle()
-end)
+local proofEngine = engine.new({
+  buffer = typedBuffer,
+  matcher = ruleMatcher,
+  replacer = textReplacer,
+  log = log,
+})
 
-log.i("ProofIME Hammerspoon backend loaded")
+local keyboardListener = keyboard.new({
+  enabled = config.enabled,
+  engine = proofEngine,
+  log = log,
+  ignoredApplications = config.ignoredApplications,
+  toggleHotkey = config.toggleHotkey,
+})
+
+keyboardListener:start()
+
+log:i("ProofIME Hammerspoon backend loaded")
