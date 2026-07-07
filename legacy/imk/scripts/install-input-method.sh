@@ -31,6 +31,8 @@ verify_plist() {
 
     local key
     for key in \
+        ComponentInputModeDict.tsInputModeListKey \
+        ComponentInputModeDict.tsVisibleInputModeOrderedArrayKey \
         TISInputSourceID \
         TISInputSourceLanguages \
         TISInputSourceType \

@@ -8,9 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		40E648752FEAD799006C371D /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 40E648732FEAD794006C371D /* README.md */; };
-		A10000000000000000000001 /* InputController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* InputController.swift */; };
-		A10000000000000000000002 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000005 /* main.swift */; };
-		A10000000000000000000010 /* proofime 512.png in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000011 /* proofime 512.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -27,11 +24,6 @@
 		40E6485C2FEAD1D5006C371D /* ProofIME.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProofIME.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		40E648732FEAD794006C371D /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		40F3C6192FF6BDA5007061E9 /* ProofIMETests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProofIMETests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000000000000000000003 /* ProofIMEInputMethod.inputmethod */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ProofIMEInputMethod.inputmethod; sourceTree = BUILT_PRODUCTS_DIR; };
-		A10000000000000000000004 /* InputController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InputController.swift; sourceTree = "<group>"; };
-		A10000000000000000000005 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
-		A10000000000000000000006 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A10000000000000000000011 /* proofime 512.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = "proofime 512.png"; path = "ProofIME/Assets.xcassets/AppIcon.appiconset/proofime 512.png"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -53,13 +45,6 @@
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
-		A1000000000000000000000A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		40E648592FEAD1D5006C371D /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -81,7 +66,6 @@
 			isa = PBXGroup;
 			children = (
 				40E6485E2FEAD1D5006C371D /* ProofIME */,
-				A10000000000000000000007 /* ProofIMEInputMethod */,
 				40F3C61A2FF6BDA5007061E9 /* ProofIMETests */,
 				40E6485D2FEAD1D5006C371D /* Products */,
 				40E648732FEAD794006C371D /* README.md */,
@@ -93,45 +77,14 @@
 			isa = PBXGroup;
 			children = (
 				40E6485C2FEAD1D5006C371D /* ProofIME.app */,
-				A10000000000000000000003 /* ProofIMEInputMethod.inputmethod */,
 				40F3C6192FF6BDA5007061E9 /* ProofIMETests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		A10000000000000000000007 /* ProofIMEInputMethod */ = {
-			isa = PBXGroup;
-			children = (
-				A10000000000000000000004 /* InputController.swift */,
-				A10000000000000000000005 /* main.swift */,
-				A10000000000000000000006 /* Info.plist */,
-				A10000000000000000000011 /* proofime 512.png */,
-			);
-			path = ProofIMEInputMethod;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A10000000000000000000008 /* ProofIMEInputMethod */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = A1000000000000000000000D /* Build configuration list for PBXNativeTarget "ProofIMEInputMethod" */;
-			buildPhases = (
-				A10000000000000000000009 /* Sources */,
-				A1000000000000000000000A /* Frameworks */,
-				A1000000000000000000000B /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			name = ProofIMEInputMethod;
-			packageProductDependencies = (
-			);
-			productName = ProofIMEInputMethod;
-			productReference = A10000000000000000000003 /* ProofIMEInputMethod.inputmethod */;
-			productType = "com.apple.product-type.application";
-		};
 		40E6485B2FEAD1D5006C371D /* ProofIME */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 40E648672FEAD1D6006C371D /* Build configuration list for PBXNativeTarget "ProofIME" */;
@@ -188,9 +141,6 @@
 				LastSwiftUpdateCheck = 2640;
 				LastUpgradeCheck = 2640;
 				TargetAttributes = {
-					A10000000000000000000008 = {
-						CreatedOnToolsVersion = 26.4.1;
-					};
 					40E6485B2FEAD1D5006C371D = {
 						CreatedOnToolsVersion = 26.4.1;
 					};
@@ -215,21 +165,12 @@
 			projectRoot = "";
 			targets = (
 				40E6485B2FEAD1D5006C371D /* ProofIME */,
-				A10000000000000000000008 /* ProofIMEInputMethod */,
 				40F3C6182FF6BDA5007061E9 /* ProofIMETests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
-		A1000000000000000000000B /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A10000000000000000000010 /* proofime 512.png in Resources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		40E6485A2FEAD1D5006C371D /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -248,15 +189,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
-		A10000000000000000000009 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				A10000000000000000000001 /* InputController.swift in Sources */,
-				A10000000000000000000002 /* main.swift in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		40E648582FEAD1D5006C371D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -282,46 +214,6 @@
 /* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
-		A1000000000000000000000E /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ProofIMEInputMethod/Info.plist;
-				INSTALL_PATH = "$(HOME)/Library/Input Methods";
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tranguyeenn.inputmethod.ProofIME;
-				PRODUCT_MODULE_NAME = ProofIMEInputMethod;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				WRAPPER_EXTENSION = inputmethod;
-			};
-			name = Debug;
-		};
-		A1000000000000000000000F /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = ProofIMEInputMethod/Info.plist;
-				INSTALL_PATH = "$(HOME)/Library/Input Methods";
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.tranguyeenn.inputmethod.ProofIME;
-				PRODUCT_MODULE_NAME = ProofIMEInputMethod;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = NO;
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_VERSION = 5.0;
-				WRAPPER_EXTENSION = inputmethod;
-			};
-			name = Release;
-		};
 		40E648652FEAD1D6006C371D /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -547,15 +439,6 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A1000000000000000000000D /* Build configuration list for PBXNativeTarget "ProofIMEInputMethod" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				A1000000000000000000000E /* Debug */,
-				A1000000000000000000000F /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 		40E648572FEAD1D5006C371D /* Build configuration list for PBXProject "ProofIME" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (

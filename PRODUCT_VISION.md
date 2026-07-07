@@ -27,7 +27,7 @@ Work in progress is core semantic consistency, configuration reliability, and su
 
 ## Intended product
 
-The planned product is a native macOS input method built with InputMethodKit, sharing a deterministic processing core with the reference app. Later phases may add a candidate window, preferences, proof-aware completions, and context-aware theorem/proof templates.
+The planned product direction is a Hammerspoon-based macOS backend, sharing deterministic rule and replacement semantics with the reference app where practical. Later phases may add preferences, proof-aware completions, and context-aware theorem/proof templates.
 
 Context-aware features require a separate design for data scope, privacy, latency, confidence, and user override. They are planned concepts, not current capabilities.
 
@@ -37,8 +37,8 @@ Context-aware features require a separate design for data scope, privacy, latenc
 - Silent semantic correction.
 - Cloud accounts or synchronization.
 - Cross-platform parity.
-- Editor-specific integrations or claims of compatibility with VS Code, Pages, Notes, Safari, Obsidian, or other hosts before a real IME is implemented and tested.
+- Editor-specific integrations or claims of compatibility with VS Code, Pages, Notes, Safari, Obsidian, or other hosts before the Hammerspoon backend is tested there.
 
 ## Success criteria
 
-Near-term success means the same input, rule set, mode, boundary, and cursor state produce the same deterministic result in tests and in the reference app. Native-IME success additionally requires correct composition, pass-through, undo, selection, and lifecycle behavior across a documented host test matrix.
+Near-term success means the same input, rule set, mode, boundary, and cursor state produce the same deterministic result in tests, in the reference app, and in the Hammerspoon backend where host constraints allow it.

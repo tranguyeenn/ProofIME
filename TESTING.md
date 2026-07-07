@@ -56,11 +56,11 @@ These steps test only the standalone app. There is no system input method to tes
 - User-file precedence and intended fallback behavior.
 - Template decoding, duplicate IDs/triggers, and missing bundle resources.
 
-### UI and future IME
+### UI and Hammerspoon backend
 
 - Insertion requests and selection replacement.
 - Mode consistency between editor and preview.
-- InputMethodKit composition/client tests once that target exists.
+- Rolling-buffer expansion and toggle behavior in Hammerspoon.
 - A recorded host compatibility matrix before any application-support claim.
 
 ## Reporting failures

@@ -78,4 +78,4 @@ The bundle currently includes direct, contrapositive, contradiction, cases, bico
 
 In progress: decide override/merge behavior, validate files, add loader tests, and align template token boundaries with the canonical tokenizer.
 
-Planned: user import/export and editing, structured field navigation, contextual ranking, and context-aware theorem/proof templates. Any contextual feature must preserve deterministic user control and follow the privacy requirements in [IME_SPEC.md](IME_SPEC.md).
+Planned: user import/export and editing, structured field navigation, contextual ranking, and context-aware theorem/proof templates. Any contextual feature must preserve deterministic user control and keep proof text processing local unless a future network feature is separately designed and consented to.

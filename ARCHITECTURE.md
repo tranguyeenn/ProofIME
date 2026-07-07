@@ -2,7 +2,7 @@
 
 ## Status and scope
 
-The repository currently builds one macOS application target (`ProofIME`) and one test target (`ProofIMETests`). The application is a SwiftUI reference/testing interface backed by `NSTextView`; there is no InputMethodKit target, input-source bundle, candidate window, or system-wide event path.
+The repository currently builds one macOS application target (`ProofIME`) and one test target (`ProofIMETests`). The application is a SwiftUI reference/testing interface backed by `NSTextView`; there is no active InputMethodKit target, input-source bundle, candidate window, or system-wide event path.
 
 ## Runtime data flow
 
@@ -59,9 +59,9 @@ keyboard boundary ─> ProofTextView ─> TokenProcessor ─> LiveReplacementCon
 
 ## Dependency direction
 
-Processing engines depend on Foundation and model types, not SwiftUI. UI code depends on engines and loaders. This separation is suitable for reuse by a future IME, but AppKit event translation and text-client operations should remain outside the engines.
+Processing engines depend on Foundation and model types, not SwiftUI. UI code depends on engines and loaders. This separation is suitable for reuse by the Hammerspoon backend, but host event translation and text-client operations should remain outside the core engines.
 
-For the proposed integration boundary, see [docs/adr/003-inputmethodkit-integration.md](docs/adr/003-inputmethodkit-integration.md).
+The failed InputMethodKit design notes are retained only as legacy material under `legacy/imk/`.
 
 ## Intended evolution
 
@@ -73,6 +73,6 @@ For the proposed integration boundary, see [docs/adr/003-inputmethodkit-integrat
 
 ### Planned
 
-- Extract a host-independent composition layer shared by the reference app and an InputMethodKit target.
-- Add IME-specific marked-text/session state and candidate presentation without coupling those concerns to rule storage.
+- Extract a host-independent composition layer shared by the reference app and the Hammerspoon backend.
+- Keep keyboard watching, backspace insertion, and host-specific behavior outside rule storage.
 - Introduce versioned configuration migration if schemas evolve.

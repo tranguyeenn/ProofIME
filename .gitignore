@@ -1,0 +1,26 @@
+# macOS filesystem noise
+.DS_Store
+
+# Xcode and Swift build products
+DerivedData/
+build/
+Build/
+.build/
+*.xcresult
+*.dSYM
+*.app
+*.xctest
+
+# Generated macOS input-method bundles
+*.inputmethod/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+tmp/
+temp/
+
+# User-local Xcode state
+*.xcuserstate
+xcuserdata/

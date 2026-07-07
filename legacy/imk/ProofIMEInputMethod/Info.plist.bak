@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+
+	<key>InputMethodConnectionName</key>
+	<string>ProofIMEConnection</string>
+
+	<key>InputMethodServerControllerClass</key>
+	<string>InputController</string>
+
+	<key>LSBackgroundOnly</key>
+	<true/>
+
+	<key>NSPrincipalClass</key>
+	<string>NSApplication</string>
+
+	<key>ComponentInputModeDict</key>
+	<dict>
+		<key>tsInputModeListKey</key>
+		<array>
+			<dict>
+				<key>TISInputSourceID</key>
+				<string>com.tranguyeenn.ProofIMEInputMethod</string>
+
+				<key>TISInputSourceLocalizedName</key>
+				<string>ProofIME</string>
+
+				<key>TISInputSourceLanguages</key>
+				<array>
+					<string>en</string>
+				</array>
+
+				<key>TISInputSourceCategory</key>
+				<string>TISCategoryKeyboardInputSource</string>
+
+				<key>TISInputSourceType</key>
+				<string>TISTypeKeyboardInputMethod</string>
+
+				<key>TISIntendedLanguage</key>
+				<string>en</string>
+
+				<key>tsInputMethodCharacterRepertoireKey</key>
+				<array>
+					<string>Latn</string>
+				</array>
+
+				<key>tsInputMethodIconFileKey</key>
+				<string>proofime512.png</string>
+			</dict>
+		</array>
+	</dict>
+</dict>
+</plist>

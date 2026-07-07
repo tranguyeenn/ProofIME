@@ -24,15 +24,15 @@ This roadmap records capability stages, not delivery dates. A feature moves to I
 - [ ] Replace the placeholder test and repair the stale live-replacement test call.
 - [ ] Add unit coverage for loaders, precedence, aliases, token boundaries, templates, and cursor updates.
 
-## Planned: native input method foundation
+## Planned: Hammerspoon backend foundation
 
-- [ ] Add a separate InputMethodKit input-source target and required bundle metadata.
-- [ ] Adapt host-client text and cursor operations to the core processor.
-- [ ] Define composition, commit, cancellation, and pass-through behavior.
-- [ ] Add deterministic logging and a reference-host test matrix.
-- [ ] Package, install, enable, disable, and uninstall a development input source safely.
+- [ ] Load symbol rules from JSON and later YAML.
+- [ ] Adapt rolling-buffer matching to the core processor semantics.
+- [ ] Define pass-through, cancellation, and toggle behavior.
+- [ ] Add deterministic logging and a reference-host smoke-test matrix.
+- [ ] Document Hammerspoon setup, reload, enable, disable, and uninstall steps.
 
-This phase must be complete before claiming system-wide IME support or compatibility with any host application.
+This phase must be complete before claiming system-wide typing support or compatibility with any host application.
 
 ## Planned: interaction and configuration
 
@@ -50,4 +50,4 @@ This phase must be complete before claiming system-wide IME support or compatibi
 
 ## Explicitly uncommitted
 
-Cross-platform implementations, editor plugins, cloud synchronization, and compatibility with named third-party applications are not implemented and have no committed release. Host support should be documented only after direct testing of the native IME.
+Cross-platform implementations, editor plugins, cloud synchronization, and compatibility with named third-party applications are not implemented and have no committed release. Host support should be documented only after direct testing with the Hammerspoon backend.

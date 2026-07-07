@@ -1,116 +1,76 @@
 # ProofIME
 
-ProofIME is an experimental macOS proof-writing tool inspired by Vietnamese Telex. It expands short, exact tokens into mathematical symbols or reusable proof text inside a reference SwiftUI application.
+ProofIME is an experimental macOS typing backend for Telex-style math and proof symbol expansion.
 
-> ProofIME is currently a standalone application, not a macOS input method. It does not yet provide system-wide typing in editors or browsers.
+ProofIME is no longer using InputMethodKit. The failed native IME implementation has been moved to `legacy/imk/` so the repository can pivot toward a smaller Hammerspoon-based backend.
 
-## Current status
+## Direction
 
-### Implemented
+The current goal is a Hammerspoon prototype that watches typed text, keeps a small rolling buffer, and expands exact triggers into proof-writing symbols across macOS apps where Hammerspoon can inject keystrokes.
 
-- A SwiftUI reference and testing interface with an AppKit-backed editor.
-- Boundary-triggered replacement on Space, Tab, and Return in that editor.
-- Built-in Unicode mappings loaded from `symbols.json`.
-- A separate, built-in LaTeX mapping table for whole-text preview conversion.
-- Legacy dictionary and rule-array symbol file decoding.
-- Built-in proof templates, search, favorites, and insertion at the cursor.
-- Symbol search and insertion, output copy, and `.txt`/`.tex` export.
-- Import, reload, and deletion controls for a user `symbols.json`.
-
-### In progress
-
-- Consolidating tokenization and replacement semantics across the preview and live editor.
-- Making configuration behavior consistent, validated, and test-covered.
-- Expanding automated coverage beyond the initial live-replacement test.
-
-### Planned
-
-- A real InputMethodKit input method and system-wide integration.
-- Candidate window and preferences UI.
-- Proof-aware completions and context-aware theorem/proof templates.
-- Compatibility testing in host applications. No support for VS Code, Pages, Notes, Safari, Obsidian, or other third-party apps is currently claimed.
-
-See [ROADMAP.md](ROADMAP.md) and [PRODUCT_VISION.md](PRODUCT_VISION.md) for intended sequencing and scope.
-
-## Example
-
-Given the built-in mappings:
+Examples:
 
 ```text
-fa x inn RR => ex y inn ZZ
+fa  -> ∀
+ex  -> ∃
+imp -> →
+iff -> ↔
+and -> ∧
+or  -> ∨
+not -> ¬
+in  -> ∈
 ```
 
-The output preview is:
+Rules are data-driven through JSON now, with YAML as a planned format once the backend needs richer configuration.
+
+## Project Layout
 
 ```text
-∀ x ∈ ℝ ⇒ ∃ y ∈ ℤ
+rules/
+└── symbols.json
+
+hammerspoon/
+├── init.lua
+├── engine.lua
+├── keyboard.lua
+└── config.lua
+
+legacy/
+└── imk/
 ```
 
-In LaTeX mode it is:
+The older Swift reference app and replacement/rules code are still present in `ProofIME/` and `ProofIMETests/`. They have not been deleted, because they contain reusable replacement behavior and tests.
 
-```latex
-\forall x \in \mathbb{R} \Rightarrow \exists y \in \mathbb{Z}
+The requested lowercase `proofime/` directory cannot coexist with the existing `ProofIME/` app directory on the default case-insensitive macOS filesystem, so the Hammerspoon backend lives at root-level `hammerspoon/`, `rules/`, and `legacy/` paths.
+
+## Run the Hammerspoon Prototype
+
+Install Hammerspoon, then load the prototype from `~/.hammerspoon/init.lua`:
+
+```lua
+package.path = package.path .. ";/Users/trangnguyen/dev/ProofIME/hammerspoon/?.lua"
+dofile("/Users/trangnguyen/dev/ProofIME/hammerspoon/init.lua")
 ```
 
-In the editor, typing `fa` followed by Space produces `∀ `. Template triggers work at the same boundaries; for example, `contra` followed by Space inserts the built-in contrapositive template.
+Reload Hammerspoon. Type a trigger such as `fa`; the backend sends backspaces for the trigger and inserts `∀`.
 
-## Build and run
-
-Requirements are determined by the Xcode project:
-
-- macOS deployment target 26.3 for the application.
-- Xcode capable of opening project object version 77 (the project records Xcode 26.4.1).
-- Swift 5 language mode.
-
-Open `ProofIME.xcodeproj`, select the `ProofIME` scheme, and run the macOS app. Command-line build:
-
-```sh
-xcodebuild -project ProofIME.xcodeproj \
-  -scheme ProofIME \
-  -destination 'platform=macOS' \
-  -derivedDataPath /tmp/ProofIME-DerivedData \
-  build
-```
-
-See [TESTING.md](TESTING.md) before relying on the current test suite.
+The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written through Hammerspoon's console under the `ProofIME` logger.
 
 ## Configuration
 
-The app uses `~/Library/Application Support/ProofIME/` and prefers a user `symbols.json` there when present. The Config menu can import a JSON file by copying it to that location. It does not validate the file before copying it; decode failures currently result in no mappings and a console message.
-
-Two symbol formats are accepted. The built-in file uses a dictionary:
+Symbol rules live in `rules/symbols.json`:
 
 ```json
 {
   "fa": "∀",
-  "inn": "∈"
+  "imp": "→"
 }
 ```
 
-A rule array is also decoded by the rule loader. See [SYMBOL_SPEC.md](SYMBOL_SPEC.md) for its schema and current semantic limitations.
+Edit that file and reload Hammerspoon to change the active rules.
 
-Templates are bundled in `ProofIME/Resources/proof_templates.json`. Although the app defines a user template path and a delete action, template loading currently reads only the bundle. See [TEMPLATE_SPEC.md](TEMPLATE_SPEC.md).
+## Legacy IMK Material
 
-## Documentation map
+InputMethodKit-specific source, plist files, install scripts, scheme files, and IMK design notes are quarantined under `legacy/imk/`. They are retained only as historical reference and are not part of the active backend direction.
 
-- [ARCHITECTURE.md](ARCHITECTURE.md): components, data flow, and technical boundaries.
-- [IME_SPEC.md](IME_SPEC.md): proposed system input method contract.
-- [SYMBOL_SPEC.md](SYMBOL_SPEC.md): symbol configuration formats and behavior.
-- [TEMPLATE_SPEC.md](TEMPLATE_SPEC.md): proof template schema and behavior.
-- [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow and code expectations.
-- [CHANGELOG.md](CHANGELOG.md): repository history by tagged milestone.
-- [`docs/adr`](docs/adr): architecture decisions and proposals.
-
-## Screenshots
-
-| Built-in Unicode | Built-in LaTeX |
-|---|---|
-| ![](screenshots/default-unicode.png) | ![](screenshots/default-latex.png) |
-
-| Custom configuration | Custom symbol library |
-|---|---|
-| ![](screenshots/custom-unicode.png) | ![](screenshots/custom-symbols.png) |
-
-## Author
-
-Trang Nguyen, Computer Science + Mathematics, Georgia State University
+Do not add a new Xcode input-method target for the Hammerspoon prototype.
