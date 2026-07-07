@@ -43,6 +43,7 @@ local keyboardListener = keyboard.new({
   toggleHotkey = config.toggleHotkey,
   reloadHotkey = config.reloadHotkey,
   triggerPrefix = config.triggerPrefix,
+  ignoredBundleIDs = config.ignoredBundleIDs,
 })
 
 keyboardListener:start()

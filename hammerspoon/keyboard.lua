@@ -9,12 +9,12 @@ local function isModifierOnly(text)
   return not text or text == ""
 end
 
-local function applicationIdentifier(app)
+local function applicationIdentifiers(app)
   if not app then
-    return nil
+    return nil, nil
   end
 
-  return app:bundleID() or app:name()
+  return app:name(), app:bundleID()
 end
 
 function keyboard.new(options)
@@ -23,6 +23,7 @@ function keyboard.new(options)
     engine = options.engine,
     log = options.log,
     ignoredApplications = options.ignoredApplications or {},
+    ignoredBundleIDs = options.ignoredBundleIDs or {},
     toggleHotkey = options.toggleHotkey,
     reloadHotkey = options.reloadHotkey,
     triggerPrefix = options.triggerPrefix or "",
@@ -65,13 +66,22 @@ function keyboard.new(options)
   end
 
   function instance:isIgnoredApplication()
-    local identifier = applicationIdentifier(hs.application.frontmostApplication())
-    if not identifier then
+    local appName, bundleID = applicationIdentifiers(hs.application.frontmostApplication())
+
+    if not appName and not bundleID then
       return false
     end
 
     for _, ignored in ipairs(self.ignoredApplications) do
-      if identifier == ignored then
+      if appName == ignored then
+        self.log:d("Ignoring application by name: " .. tostring(appName))
+        return true
+      end
+    end
+
+    for _, ignored in ipairs(self.ignoredBundleIDs) do
+      if bundleID == ignored then
+        self.log:d("Ignoring application by bundle ID: " .. tostring(bundleID))
         return true
       end
     end
@@ -80,7 +90,12 @@ function keyboard.new(options)
   end
 
   function instance:handleKey(event)
-    if not self.enabled or self.engine:isReplacing() or self:isIgnoredApplication() then
+    if not self.enabled or self.engine:isReplacing() then
+      return false
+    end
+
+    if self:isIgnoredApplication() then
+      self.engine:clear()
       return false
     end
 

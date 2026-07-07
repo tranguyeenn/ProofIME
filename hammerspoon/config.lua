@@ -9,14 +9,33 @@ config.debug = false
 config.maxBufferLength = 16
 config.triggerPrefix = ":"
 config.requireTriggerPrefix = true
-config.ignoredApplications = {}
+config.ignoredApplications = {
+  "Terminal",
+  "iTerm2",
+  "Warp",
+  "Ghostty",
+  "Alacritty",
+  "kitty",
+  "1Password",
+  "KeePassXC",
+  "Bitwarden"
+}
+config.ignoredBundleIDs = {
+  "com.apple.Terminal",
+  "com.googlecode.iterm2",
+  "dev.warp.Warp-Stable",
+  "com.mitchellh.ghostty",
+  "org.alacritty",
+  "net.kovidgoyal.kitty",
+  "com.1password.1password",
+  "org.keepassxc.keepassxc",
+  "com.bitwarden.desktop"
+}
 config.replacementMode = "unicode"
-
 config.toggleHotkey = {
   mods = { "cmd", "alt", "ctrl" },
   key = "p",
 }
-
 config.reloadHotkey = {
   mods = { "cmd", "ctrl", "alt" },
   key = "r",
