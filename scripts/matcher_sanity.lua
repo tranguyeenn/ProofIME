@@ -21,16 +21,31 @@ local function run()
     },
     categories = {
       logic = {
-        fa = "∀",
-        or = "∨",
+        {
+          trigger = "fa",
+          replacement = "∀",
+          description = "for all",
+          keywords = { "forall", "logic" },
+          category = "logic",
+        },
+        {
+          trigger = "or",
+          replacement = "∨",
+          description = "logical or",
+          keywords = { "vee", "logic" },
+          category = "logic",
+        },
       },
       relations = {
+        e = "E",
         le = "≤",
         neq = "≠",
       },
     },
   }
 
+  -- Minimal Hammerspoon stub for local Lua runs. matcher.lua only reaches
+  -- Hammerspoon through utils.readJson -> hs.json.read in this test.
   hs = {
     json = {
       read = function(path)
@@ -39,19 +54,25 @@ local function run()
         end
 
         local category = path:match("/([^/]+)%.json$")
-        if category and state.categories[category] then
-          return state.categories[category]
+        local categoryRules = category and state.categories[category]
+        if categoryRules == "__throw__" then
+          error("malformed JSON")
+        end
+
+        if categoryRules ~= nil then
+          return categoryRules
         end
 
         if path:match("symbols%.json$") then
           return {
             fa = "∀",
+            e = "E",
             ["in"] = "∈",
             le = "≤",
             neq = "≠",
             lambda = "λ",
             int = "∫",
-            or = "∨",
+            ["or"] = "∨",
           }
         end
 
@@ -81,6 +102,22 @@ local function run()
     end
   end
 
+  local function assertContains(actual, expected, message)
+    if type(actual) ~= "string" or not actual:find(expected, 1, true) then
+      error(message .. ": expected '" .. tostring(actual) .. "' to contain '" .. tostring(expected) .. "'", 2)
+    end
+  end
+
+  local indexed
+
+  local function assertReloadFailsWith(categoryRules, message)
+    state.categories.relations = categoryRules
+    local result = indexed:reload()
+    assertEqual(result.ok, false, message .. " fails reload")
+    assertEqual(result.ruleCount, 3, message .. " reports previous active count")
+    assertEqual(indexed:findMatch(":le").replacement, "LESS-OR-EQUAL", message .. " preserves previous rules")
+  end
+
   local prefixed = matcher.new({
     rulesPath = legacyDirectory .. "symbols.json",
     log = log,
@@ -95,6 +132,7 @@ local function run()
   assertEqual(match.replacement, "∀", "prefixed match returns the replacement")
   assertEqual(prefixed:findMatch(":fa").replacement, "∀", "prefixed forall trigger matches")
   assertEqual(prefixed:findMatch(":le").replacement, "≤", "prefixed relation trigger matches")
+  assertEqual(prefixed:findMatch(":le").ruleTrigger, "le", "longest prefixed trigger match wins")
   assertEqual(prefixed:findMatch(":neq").replacement, "≠", "prefixed not-equal trigger matches")
   assertEqual(prefixed:findMatch(":lambda").replacement, "λ", "prefixed lambda trigger matches")
   assertEqual(prefixed:findMatch(":int").replacement, "∫", "prefixed integral trigger matches")
@@ -118,7 +156,7 @@ local function run()
   assertEqual(match.ruleTrigger, "fa", "legacy mode uses the bare rule trigger")
   assertEqual(legacy:findMatch("categor").replacement, "∨", "legacy mode preserves bare suffix matching")
 
-  local indexed = matcher.new({
+  indexed = matcher.new({
     rulesPath = tempDirectory .. "symbols.json",
     log = log,
     triggerPrefix = ":",
@@ -126,12 +164,23 @@ local function run()
   })
 
   assertEqual(indexed:findMatch(":fa").replacement, "∀", "indexed normal load includes logic rules")
+  assertEqual(indexed:findMatch(":fa").description, "for all", "metadata description loads")
+  assertEqual(indexed:findMatch(":fa").keywords[1], "forall", "metadata keywords load")
+  assertEqual(indexed:findMatch(":fa").category, "logic", "metadata category loads")
   assertEqual(indexed:findMatch(":le").replacement, "≤", "indexed normal load includes relation rules")
-  assertEqual(indexed:loadRules().ruleCount, 4, "normal load reports active rule count")
+  assertEqual(indexed:findMatch(":le").ruleTrigger, "le", "indexed longest trigger match wins")
+  assertEqual(indexed:findMatch(":le").category, "relations", "legacy category file supplies category metadata")
+  assertEqual(indexed:loadRules().ruleCount, 5, "normal load reports active rule count")
 
   state.categories = {
     logic = {
-      fa = "FORALL",
+      {
+        trigger = "fa",
+        replacement = "FORALL",
+        description = "updated forall",
+        keywords = { "logic" },
+        category = "logic",
+      },
     },
     relations = {
       le = "LESS-OR-EQUAL",
@@ -151,6 +200,72 @@ local function run()
   assertEqual(reloadResult.ok, false, "invalid reload fails")
   assertEqual(reloadResult.ruleCount, 3, "invalid reload reports previous active count")
   assertEqual(indexed:findMatch(":le").replacement, "LESS-OR-EQUAL", "invalid reload preserves previous rules")
+
+  assertReloadFailsWith({
+    [""] = "EMPTY-TRIGGER",
+  }, "empty trigger")
+
+  assertReloadFailsWith({
+    ["   "] = "WHITESPACE-TRIGGER",
+  }, "whitespace-only trigger")
+
+  assertReloadFailsWith({
+    le = 123,
+  }, "non-string replacement")
+
+  assertReloadFailsWith({
+    {
+      trigger = "le",
+      replacement = "LESS-OR-EQUAL",
+      description = 123,
+    },
+  }, "non-string metadata description")
+
+  assertReloadFailsWith({
+    {
+      trigger = "le",
+      replacement = "LESS-OR-EQUAL",
+      keywords = { "relation", 123 },
+    },
+  }, "non-string metadata keyword")
+
+  assertReloadFailsWith({
+    {
+      trigger = "le",
+      replacement = "LESS-OR-EQUAL",
+      category = 123,
+    },
+  }, "non-string metadata category")
+
+  state.categories.relations = {
+    {
+      trigger = "le",
+      replacement = 123,
+    },
+  }
+  reloadResult = indexed:reload()
+  assertEqual(reloadResult.ok, false, "metadata replacement validation fails reload")
+  assertContains(reloadResult.error, "replacement must be a string", "metadata replacement validation reports clear error")
+  assertEqual(reloadResult.ruleCount, 3, "metadata validation failure reports previous active count")
+  assertEqual(indexed:findMatch(":le").replacement, "LESS-OR-EQUAL", "metadata validation failure preserves previous rules")
+
+  state.categories.relations = nil
+  reloadResult = indexed:reload()
+  assertEqual(reloadResult.ok, false, "malformed JSON read failure fails reload")
+  assertEqual(reloadResult.ruleCount, 3, "malformed JSON read failure reports previous active count")
+  assertEqual(indexed:findMatch(":le").replacement, "LESS-OR-EQUAL", "malformed JSON read failure preserves previous rules")
+
+  state.categories.relations = "__throw__"
+  reloadResult = indexed:reload()
+  assertEqual(reloadResult.ok, false, "malformed JSON parser error fails reload")
+  assertEqual(reloadResult.ruleCount, 3, "malformed JSON parser error reports previous active count")
+  assertEqual(indexed:findMatch(":le").replacement, "LESS-OR-EQUAL", "malformed JSON parser error preserves previous rules")
+
+  state.index.enabled = { "logic" }
+  reloadResult = indexed:reload()
+  assertEqual(reloadResult.ok, true, "disabled broken category does not block reload")
+  assertEqual(reloadResult.ruleCount, 1, "disabled broken category reloads enabled rules only")
+  assertEqual(indexed:findMatch(":fa").replacement, "FORALL", "enabled rules remain available after disabled broken category")
 
   print("matcher sanity checks passed")
 end

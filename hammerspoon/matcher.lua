@@ -3,20 +3,136 @@ local utils = require("utils")
 
 local matcher = {}
 
-local function normalizeRules(rawRules)
-  if type(rawRules) ~= "table" then
-    return nil
+local function trim(value)
+  return value:match("^%s*(.-)%s*$")
+end
+
+local function isArray(values)
+  if type(values) ~= "table" then
+    return false
   end
 
-  local rules = {}
+  return values[1] ~= nil
+end
 
-  for trigger, replacement in pairs(rawRules or {}) do
-    if type(trigger) == "string" and type(replacement) == "string" then
-      rules[trigger] = replacement
+local function isStringArray(values)
+  if type(values) ~= "table" then
+    return false
+  end
+
+  local length = #values
+
+  for key, value in pairs(values) do
+    if type(key) ~= "number" or key < 1 or key > length or key % 1 ~= 0 then
+      return false
+    end
+
+    if type(value) ~= "string" then
+      return false
     end
   end
 
-  return rules
+  return true
+end
+
+local function normalizeLegacyRule(trigger, replacement, sourceName, defaultCategory, errors, rules)
+  if type(trigger) ~= "string" then
+    table.insert(errors, sourceName .. ": trigger must be a string")
+    return
+  end
+
+  local normalizedTrigger = trim(trigger)
+
+  if normalizedTrigger == "" then
+    table.insert(errors, sourceName .. ": trigger cannot be empty")
+  elseif type(replacement) ~= "string" then
+    table.insert(errors, sourceName .. ": replacement for '" .. trigger .. "' must be a string")
+  else
+    table.insert(rules, {
+      trigger = normalizedTrigger,
+      replacement = replacement,
+      description = nil,
+      keywords = {},
+      category = defaultCategory,
+      source = sourceName,
+    })
+  end
+end
+
+local function normalizeMetadataRule(rawRule, index, sourceName, defaultCategory, errors, rules)
+  local label = sourceName .. "[" .. tostring(index) .. "]"
+  local initialErrorCount = #errors
+
+  if type(rawRule) ~= "table" then
+    table.insert(errors, label .. ": rule must be an object")
+    return
+  end
+
+  local trigger = rawRule.trigger
+  local replacement = rawRule.replacement
+  local description = rawRule.description
+  local keywords = rawRule.keywords
+  local category = rawRule.category
+
+  if type(trigger) ~= "string" then
+    table.insert(errors, label .. ": trigger must be a string")
+  elseif trim(trigger) == "" then
+    table.insert(errors, label .. ": trigger cannot be empty")
+  end
+
+  if type(replacement) ~= "string" then
+    table.insert(errors, label .. ": replacement must be a string")
+  end
+
+  if description ~= nil and type(description) ~= "string" then
+    table.insert(errors, label .. ": description must be a string")
+  end
+
+  if keywords ~= nil and not isStringArray(keywords) then
+    table.insert(errors, label .. ": keywords must be an array of strings")
+  end
+
+  if category ~= nil and type(category) ~= "string" then
+    table.insert(errors, label .. ": category must be a string")
+  end
+
+  if #errors > initialErrorCount then
+    return
+  end
+
+  table.insert(rules, {
+    trigger = trim(trigger),
+    replacement = replacement,
+    description = description,
+    keywords = keywords or {},
+    category = category or defaultCategory,
+    source = sourceName,
+  })
+end
+
+local function normalizeRules(rawRules, sourceName, defaultCategory)
+  if type(rawRules) ~= "table" then
+    return nil, sourceName .. " is not a valid rule object or rule array"
+  end
+
+  local rules = {}
+  local errors = {}
+
+  if isArray(rawRules) then
+    for index, rawRule in ipairs(rawRules) do
+      normalizeMetadataRule(rawRule, index, sourceName, defaultCategory, errors, rules)
+    end
+  else
+    for trigger, replacement in pairs(rawRules or {}) do
+      normalizeLegacyRule(trigger, replacement, sourceName, defaultCategory, errors, rules)
+    end
+  end
+
+  if #errors > 0 then
+    return nil, table.concat(errors, "\n")
+  end
+
+  return rules, nil
 end
 
 local function directoryForPath(path)
@@ -74,11 +190,15 @@ function matcher.new(options)
     maxTriggerLength = 0,
   }
 
+  instance.log:i("Matcher rulesPath: " .. tostring(instance.rulesPath))
+  instance.log:i("Matcher rulesDirectory: " .. tostring(instance.rulesDirectory))
+  instance.log:i("Matcher indexPath: " .. tostring(instance.indexPath))
+
   function instance:updateMaxTriggerLength()
     self.maxTriggerLength = 0
 
-    for trigger, _ in pairs(self.rules) do
-      self.maxTriggerLength = math.max(self.maxTriggerLength, #trigger)
+    for _, rule in ipairs(self.rules) do
+      self.maxTriggerLength = math.max(self.maxTriggerLength, #rule.trigger)
     end
 
     if self.requireTriggerPrefix then
@@ -92,16 +212,18 @@ function matcher.new(options)
   end
 
   function instance:buildLegacyRules()
-    -- TODO: Remove symbols.json fallback after categorized rules are the only supported format.
+    self.log:i("Loading legacy rules from " .. tostring(self.rulesPath))
+
     local rawRules, errorMessage = utils.readJson(self.rulesPath)
 
     if not rawRules then
       return nil, "Could not load rules from " .. self.rulesPath .. ": " .. tostring(errorMessage)
     end
 
-    local normalizedRules = normalizeRules(rawRules)
+    local normalizedRules, validationError = normalizeRules(rawRules, "Legacy rules file at " .. self.rulesPath, nil)
+
     if not normalizedRules then
-      return nil, "Legacy rules file at " .. self.rulesPath .. " is not a valid rule object"
+      return nil, validationError
     end
 
     return normalizedRules, nil, {}
@@ -109,21 +231,27 @@ function matcher.new(options)
 
   function instance:loadCategory(category)
     local path = categoryPath(self.rulesDirectory, category)
+
+    self.log:i("Loading rule category '" .. category .. "' from " .. path)
+
     local rawRules, errorMessage = utils.readJson(path)
 
     if not rawRules then
       return nil, "Could not load rule category '" .. category .. "' at " .. path .. ": " .. tostring(errorMessage)
     end
 
-    local normalizedRules = normalizeRules(rawRules)
+    local normalizedRules, validationError = normalizeRules(rawRules, "Rule category '" .. category .. "' at " .. path, category)
+
     if not normalizedRules then
-      return nil, "Rule category '" .. category .. "' at " .. path .. " is not a valid rule object"
+      return nil, validationError
     end
 
     return normalizedRules
   end
 
   function instance:buildRules()
+    self.log:i("Checking rules index at " .. tostring(self.indexPath))
+
     if not utils.fileExists(self.indexPath) then
       self.log:w("Rules index not found at " .. self.indexPath .. "; falling back to legacy symbols.json")
       return self:buildLegacyRules()
@@ -142,6 +270,8 @@ function matcher.new(options)
       return nil, "Rules index at " .. self.indexPath .. " has no valid enabled category list"
     end
 
+    self.log:i("Enabled rule categories to load: " .. table.concat(categories, ", "))
+
     local mergedRules = {}
     local loadedCategories = {}
 
@@ -152,15 +282,24 @@ function matcher.new(options)
         return nil, categoryError
       end
 
-      for trigger, replacement in pairs(categoryRules) do
-        mergedRules[trigger] = replacement
+      for _, rule in ipairs(categoryRules) do
+        if mergedRules[rule.trigger] ~= nil then
+          return nil, "Duplicate trigger '" .. rule.trigger .. "' found while loading category '" .. category .. "'"
+        end
+
+        mergedRules[rule.trigger] = rule
       end
 
       table.insert(loadedCategories, category)
     end
 
     self.log:i("Enabled rule categories loaded: " .. table.concat(loadedCategories, ", "))
-    return mergedRules, nil, loadedCategories
+    local rules = {}
+    for _, rule in pairs(mergedRules) do
+      table.insert(rules, rule)
+    end
+
+    return rules, nil, loadedCategories
   end
 
   function instance:loadRules()
@@ -168,10 +307,10 @@ function matcher.new(options)
 
     if not rules then
       self.log:e("Rule load failed: " .. tostring(errorMessage))
-      self:applyRules({})
+
       return {
         ok = false,
-        ruleCount = 0,
+        ruleCount = utils.countTable(self.rules),
         error = errorMessage,
       }
     end
@@ -211,6 +350,7 @@ function matcher.new(options)
 
       typedPrefix = self.triggerPrefix
       matchBuffer = bufferValue:sub(prefixStart + #self.triggerPrefix)
+
       self.log:d(
         "Matcher prefix detection: found prefix '"
           .. tostring(self.triggerPrefix)
@@ -224,13 +364,15 @@ function matcher.new(options)
     end
 
     local bestTrigger = nil
-    local bestReplacement = nil
+    local bestRule = nil
     local bestTypedTrigger = nil
 
-    for trigger, replacement in pairs(self.rules) do
+    for _, rule in ipairs(self.rules) do
+      local trigger = rule.trigger
+
       if utils.endsWith(matchBuffer, trigger) and (not bestTrigger or #trigger > #bestTrigger) then
         bestTrigger = trigger
-        bestReplacement = replacement
+        bestRule = rule
         bestTypedTrigger = typedPrefix .. trigger
       end
     end
@@ -240,22 +382,30 @@ function matcher.new(options)
       return nil
     end
 
-    self.log:d("Matcher rule matched: '" .. bestTrigger .. "' -> '" .. bestReplacement .. "'")
+    self.log:d("Matcher rule matched: '" .. bestTrigger .. "' -> '" .. bestRule.replacement .. "'")
 
     return {
       trigger = bestTypedTrigger,
       ruleTrigger = bestTrigger,
-      replacement = bestReplacement,
+      replacement = bestRule.replacement,
+      description = bestRule.description,
+      keywords = bestRule.keywords,
+      category = bestRule.category,
+      source = bestRule.source,
     }
   end
 
   function instance:reload()
     self.log:i("Rule reload started")
+    self.log:i("Reload using rulesDirectory: " .. tostring(self.rulesDirectory))
+    self.log:i("Reload using indexPath: " .. tostring(self.indexPath))
+
     local rules, errorMessage, loadedCategories = self:buildRules()
 
     if not rules then
       self.log:e("Rule reload failed: " .. tostring(errorMessage))
       self.log:i("Keeping previous active rule set with " .. tostring(utils.countTable(self.rules)) .. " rules")
+
       return {
         ok = false,
         ruleCount = utils.countTable(self.rules),

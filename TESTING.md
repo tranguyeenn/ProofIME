@@ -24,6 +24,32 @@ xcodebuild test \
 
 The project requires a compatible local Xcode/macOS SDK. Using `/tmp` avoids writing Derived Data into the repository and can avoid workspace permission problems.
 
+## Hammerspoon Matcher Sanity Tests
+
+The matcher sanity test can run outside Hammerspoon with a standalone Lua runtime. It stubs only the `hs.json.read` API that `hammerspoon/utils.lua` uses while loading rules, so Hammerspoon does not need to be running and the `hs` CLI is not required.
+
+Install Lua with Homebrew if needed:
+
+```sh
+brew install lua
+```
+
+Run from the repository root:
+
+```sh
+lua scripts/matcher_sanity.lua
+```
+
+This verifies legacy object rules, metadata array rules, invalid metadata reporting, reload failure preservation, longest trigger matching, prefix-required matching, and category loading.
+
+You can also run the same script through Hammerspoon when an IPC-enabled Hammerspoon instance is already running:
+
+```sh
+hs -q ./scripts/matcher_sanity.lua
+```
+
+If that fails with `can't access Hammerspoon message port`, enable Hammerspoon's IPC module or use the standalone Lua command above.
+
 ## Manual smoke test
 
 Until automated coverage is stronger:

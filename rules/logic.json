@@ -1,8 +1,44 @@
-{
-  "fa": "∀",
-  "ex": "∃",
-  "and": "∧",
-  "or": "∨",
-  "not": "¬",
-  "iff": "↔"
-}
+[
+  {
+    "trigger": "fa",
+    "replacement": "∀",
+    "description": "for all",
+    "keywords": ["forall", "universal", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "ex",
+    "replacement": "∃",
+    "description": "there exists",
+    "keywords": ["exists", "existential", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "and",
+    "replacement": "∧",
+    "description": "logical and",
+    "keywords": ["conjunction", "wedge", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "or",
+    "replacement": "∨",
+    "description": "logical or",
+    "keywords": ["disjunction", "vee", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "not",
+    "replacement": "¬",
+    "description": "logical not",
+    "keywords": ["negation", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "iff",
+    "replacement": "↔",
+    "description": "if and only if",
+    "keywords": ["biconditional", "logic"],
+    "category": "logic"
+  }
+]
