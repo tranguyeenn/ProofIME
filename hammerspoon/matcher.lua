@@ -178,6 +178,116 @@ local function enabledCategories(index)
   return categories
 end
 
+local function lower(value)
+  return string.lower(value or "")
+end
+
+local function contains(value, needle)
+  return type(value) == "string" and needle ~= "" and lower(value):find(needle, 1, true) ~= nil
+end
+
+local function fuzzyContains(value, needle)
+  if type(value) ~= "string" or needle == "" then
+    return false
+  end
+
+  local haystack = lower(value)
+  local needleIndex = 1
+
+  for index = 1, #haystack do
+    if haystack:sub(index, index) == needle:sub(needleIndex, needleIndex) then
+      needleIndex = needleIndex + 1
+
+      if needleIndex > #needle then
+        return true
+      end
+    end
+  end
+
+  return false
+end
+
+local function candidateFromRule(rule, score, rankReason)
+  return {
+    trigger = rule.trigger,
+    replacement = rule.replacement,
+    description = rule.description,
+    keywords = rule.keywords,
+    category = rule.category,
+    score = score,
+    rankReason = rankReason,
+  }
+end
+
+local function candidateQuery(bufferValue, triggerPrefix, requireTriggerPrefix)
+  if type(bufferValue) ~= "string" then
+    return nil
+  end
+
+  if requireTriggerPrefix then
+    local prefixStart = lastPlainMatch(bufferValue, triggerPrefix)
+
+    if not prefixStart then
+      return nil
+    end
+
+    return trim(bufferValue:sub(prefixStart + #triggerPrefix))
+  end
+
+  if triggerPrefix ~= "" then
+    local prefixStart = lastPlainMatch(bufferValue, triggerPrefix)
+
+    if prefixStart then
+      return trim(bufferValue:sub(prefixStart + #triggerPrefix))
+    end
+  end
+
+  return trim(bufferValue)
+end
+
+local function rankRule(rule, query)
+  if query == "" then
+    return nil
+  end
+
+  local normalizedQuery = lower(query)
+  local normalizedTrigger = lower(rule.trigger)
+
+  if normalizedTrigger == normalizedQuery then
+    return 1000, "exact"
+  end
+
+  if normalizedTrigger:sub(1, #normalizedQuery) == normalizedQuery then
+    return 800 - (#normalizedTrigger - #normalizedQuery), "trigger-prefix"
+  end
+
+  if contains(rule.description, normalizedQuery) then
+    return 600, "description"
+  end
+
+  for _, keyword in ipairs(rule.keywords or {}) do
+    if contains(keyword, normalizedQuery) then
+      return 600, "keyword"
+    end
+  end
+
+  if fuzzyContains(rule.trigger, normalizedQuery) then
+    return 400 - (#rule.trigger - #normalizedQuery), "fuzzy"
+  end
+
+  if fuzzyContains(rule.description, normalizedQuery) then
+    return 350, "fuzzy-description"
+  end
+
+  for _, keyword in ipairs(rule.keywords or {}) do
+    if fuzzyContains(keyword, normalizedQuery) then
+      return 350, "fuzzy-keyword"
+    end
+  end
+
+  return nil
+end
+
 function matcher.new(options)
   local instance = {
     rulesPath = options.rulesPath,
@@ -393,6 +503,56 @@ function matcher.new(options)
       category = bestRule.category,
       source = bestRule.source,
     }
+  end
+
+  function instance:getCandidates(bufferValue, candidateConfig, limit)
+    local effectiveConfig = candidateConfig or {}
+    local triggerPrefix = effectiveConfig.triggerPrefix
+
+    if triggerPrefix == nil then
+      triggerPrefix = self.triggerPrefix
+    end
+
+    local requireTriggerPrefix = self.requireTriggerPrefix
+    if effectiveConfig.requireTriggerPrefix ~= nil then
+      requireTriggerPrefix = effectiveConfig.requireTriggerPrefix == true
+    end
+
+    local query = candidateQuery(bufferValue, triggerPrefix or "", requireTriggerPrefix)
+    if not query or query == "" then
+      return {}
+    end
+
+    local candidates = {}
+
+    for _, rule in ipairs(self.rules) do
+      local score, rankReason = rankRule(rule, query)
+
+      if score then
+        table.insert(candidates, candidateFromRule(rule, score, rankReason))
+      end
+    end
+
+    table.sort(candidates, function(left, right)
+      if left.score ~= right.score then
+        return left.score > right.score
+      end
+
+      if #left.trigger ~= #right.trigger then
+        return #left.trigger < #right.trigger
+      end
+
+      return left.trigger < right.trigger
+    end)
+
+    local maxResults = tonumber(limit) or #candidates
+    local limitedCandidates = {}
+
+    for index = 1, math.min(maxResults, #candidates) do
+      table.insert(limitedCandidates, candidates[index])
+    end
+
+    return limitedCandidates
   end
 
   function instance:reload()

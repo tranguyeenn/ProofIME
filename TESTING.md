@@ -40,7 +40,7 @@ Run from the repository root:
 lua scripts/matcher_sanity.lua
 ```
 
-This verifies legacy object rules, metadata array rules, invalid metadata reporting, reload failure preservation, longest trigger matching, prefix-required matching, and category loading.
+This verifies legacy object rules, metadata array rules, invalid metadata reporting, reload failure preservation, longest trigger matching, prefix-required matching, category loading, and candidate ranking.
 
 You can also run the same script through Hammerspoon when an IPC-enabled Hammerspoon instance is already running:
 

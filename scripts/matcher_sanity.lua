@@ -17,7 +17,7 @@ local function run()
 
   local state = {
     index = {
-      enabled = { "logic", "relations" },
+      enabled = { "logic", "relations", "greek" },
     },
     categories = {
       logic = {
@@ -25,7 +25,7 @@ local function run()
           trigger = "fa",
           replacement = "∀",
           description = "for all",
-          keywords = { "forall", "logic" },
+          keywords = { "forall", "universal", "logic" },
           category = "logic",
         },
         {
@@ -40,6 +40,36 @@ local function run()
         e = "E",
         le = "≤",
         neq = "≠",
+      },
+      greek = {
+        {
+          trigger = "alpha",
+          replacement = "α",
+          description = "Greek alpha",
+          keywords = { "alp", "greek", "letter" },
+          category = "greek",
+        },
+        {
+          trigger = "beta",
+          replacement = "β",
+          description = "Greek beta",
+          keywords = { "greek", "letter" },
+          category = "greek",
+        },
+        {
+          trigger = "gamma",
+          replacement = "γ",
+          description = "Greek gamma",
+          keywords = { "greek", "letter" },
+          category = "greek",
+        },
+        {
+          trigger = "lambda",
+          replacement = "λ",
+          description = "Greek lambda",
+          keywords = { "function", "greek", "letter" },
+          category = "greek",
+        },
       },
     },
   }
@@ -108,6 +138,12 @@ local function run()
     end
   end
 
+  local function assertLength(actual, expected, message)
+    if #actual ~= expected then
+      error(message .. ": expected length " .. tostring(expected) .. ", got " .. tostring(#actual), 2)
+    end
+  end
+
   local indexed
 
   local function assertReloadFailsWith(categoryRules, message)
@@ -170,7 +206,35 @@ local function run()
   assertEqual(indexed:findMatch(":le").replacement, "≤", "indexed normal load includes relation rules")
   assertEqual(indexed:findMatch(":le").ruleTrigger, "le", "indexed longest trigger match wins")
   assertEqual(indexed:findMatch(":le").category, "relations", "legacy category file supplies category metadata")
-  assertEqual(indexed:loadRules().ruleCount, 5, "normal load reports active rule count")
+  assertEqual(indexed:loadRules().ruleCount, 9, "normal load reports active rule count")
+
+  local candidates = indexed:getCandidates(":fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertEqual(candidates[1].trigger, "fa", "exact candidate ranks first")
+  assertEqual(candidates[1].replacement, "∀", "exact candidate returns forall replacement")
+  assertEqual(candidates[1].rankReason, "exact", "exact candidate reports rank reason")
+
+  candidates = indexed:getCandidates(":alp", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertEqual(candidates[1].trigger, "alpha", "alpha prefix candidate ranks first")
+  assertEqual(candidates[1].replacement, "α", "alpha prefix candidate returns replacement")
+  assertEqual(candidates[1].category, "greek", "alpha candidate preserves category metadata")
+
+  candidates = indexed:getCandidates(":lamb", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertEqual(candidates[1].trigger, "lambda", "lambda prefix candidate ranks first")
+  assertEqual(candidates[1].replacement, "λ", "lambda prefix candidate returns replacement")
+  assertEqual(candidates[1].rankReason, "trigger-prefix", "lambda candidate reports prefix rank reason")
+
+  candidates = indexed:getCandidates(":universal", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertEqual(candidates[1].trigger, "fa", "keyword candidate finds forall")
+  assertEqual(candidates[1].rankReason, "keyword", "keyword candidate reports rank reason")
+
+  candidates = indexed:getCandidates(":fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertEqual(candidates[1].rankReason, "exact", "exact candidate beats fuzzy candidates")
+
+  candidates = indexed:getCandidates(":a", { triggerPrefix = ":", requireTriggerPrefix = true }, 2)
+  assertLength(candidates, 2, "candidate limit is applied")
+
+  candidates = indexed:getCandidates("fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
+  assertLength(candidates, 0, "candidate search respects required prefix")
 
   state.categories = {
     logic = {
@@ -187,6 +251,7 @@ local function run()
       ge = "GREATER-OR-EQUAL",
     },
   }
+  state.index.enabled = { "logic", "relations" }
 
   local reloadResult = indexed:reload()
   assertEqual(reloadResult.ok, true, "valid reload succeeds")
