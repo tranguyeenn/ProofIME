@@ -40,5 +40,12 @@
     "description": "if and only if",
     "keywords": ["biconditional", "logic"],
     "category": "logic"
+  },
+  {
+  "trigger": "xor",
+  "replacement": "⊕",
+  "description": "exclusive or",
+  "keywords": ["xor", "exclusive or", "logic", "boolean"],
+  "category": "logic"
   }
 ]

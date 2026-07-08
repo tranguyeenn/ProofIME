@@ -1,6 +1,20 @@
 {
+  "nat": "ℕ",
+  "integers": "ℤ",
+  "rat": "ℚ",
+  "real": "ℝ",
+  "compnum": "ℂ",
   "in": "∈",
   "nin": "∉",
+  "subseteq": "⊆",
+  "supseteq": "⊇",
   "sub": "⊂",
-  "sup": "⊃"
+  "sup": "⊃",
+  "empty": "∅",
+  "union": "∪",
+  "intersect": "∩",
+  "setminus": "∖",
+  "comp": "∘",
+  "cross": "×",
+  "powerset": "℘"
 }
