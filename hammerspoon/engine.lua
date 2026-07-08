@@ -41,7 +41,7 @@ function engine.new(options)
   function instance:reloadRules()
     local result = self.matcher:reload()
 
-    if result.ok then
+    if result and result.ok then
       self.buffer:setMaxLength(math.max(self.buffer.configuredMaxLength, self.matcher.maxTriggerLength))
       self.buffer:trim()
     end

@@ -19,6 +19,7 @@ Examples:
 :or  -> ∨
 :not -> ¬
 :in  -> ∈
+:lambda -> λ
 ```
 
 Rules are data-driven through JSON now, with YAML as a planned format once the backend needs richer configuration.
@@ -37,9 +38,9 @@ hammerspoon/
 ├── buffer.lua
 ├── matcher.lua
 ├── replacer.lua
+├── cheatsheet.lua
 ├── logger.lua
-├── utils.lua
-└── ui.lua
+└── utils.lua
 
 legacy/
 └── imk/
@@ -63,6 +64,8 @@ Reload Hammerspoon. Type a trigger such as `:fa`; the backend sends backspaces f
 The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written through Hammerspoon's console under the `ProofIME` logger.
 
 Press `cmd` + `ctrl` + `alt` + `r` to reload `rules/index.json` and all enabled rule categories without restarting Hammerspoon. An on-screen alert reports `ProofIME: Reloaded X rules` on success. If reload fails, ProofIME keeps the previous working rule set active, shows `ProofIME: Reload failed`, and writes the detailed error to the Hammerspoon log.
+
+Press `cmd` + `ctrl` + `alt` + `/` to open the floating ProofIME cheat sheet. It is searchable, resizable, remembers its last size and position, and lists loaded triggers by category, such as `:fa → ∀`, `:in → ∈`, `:le → ≤`, and `:lambda → λ`.
 
 ## Configuration
 
@@ -116,15 +119,17 @@ With that default, `:le` expands to `≤` and `:or` expands to `∨`, while norm
 The Hammerspoon backend is split into small modules:
 
 - `init.lua` wires modules together and starts keyboard listeners.
-- `config.lua` owns runtime knobs such as enabled state, debug logging, buffer length, ignored apps, replacement mode, and the toggle hotkey.
+- `config.lua` owns runtime knobs such as enabled state, debug logging, buffer length, ignored apps, replacement mode, and hotkeys.
 - `keyboard.lua` adapts Hammerspoon key events into engine input.
 - `engine.lua` coordinates the buffer, matcher, and replacer.
 - `buffer.lua` maintains the rolling typed buffer.
 - `matcher.lua` loads enabled rule categories and finds the longest suffix match.
 - `replacer.lua` sends backspaces and inserts the replacement text.
+- `cheatsheet.lua` renders the searchable hotkey reference from the loaded rules.
 - `logger.lua` wraps Hammerspoon logging.
 - `utils.lua` contains shared string, JSON, and file helpers.
-- `ui.lua` is a placeholder for future candidate-window work.
+
+ProofIME v1 intentionally does not show a caret-positioned candidate popup. Symbol discovery is handled by the cheat sheet while live typing stays limited to exact trigger replacement.
 
 ## Legacy IMK Material
 

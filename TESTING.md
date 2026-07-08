@@ -40,7 +40,7 @@ Run from the repository root:
 lua scripts/matcher_sanity.lua
 ```
 
-This verifies legacy object rules, metadata array rules, invalid metadata reporting, reload failure preservation, longest trigger matching, prefix-required matching, category loading, and candidate ranking.
+This verifies legacy object rules, metadata array rules, invalid metadata reporting, reload failure preservation, longest trigger matching, prefix-required matching, category loading, and direct engine replacement with local stubs.
 
 You can also run the same script through Hammerspoon when an IPC-enabled Hammerspoon instance is already running:
 
@@ -63,6 +63,19 @@ Until automated coverage is stronger:
 7. Import a valid symbol dictionary, reload, and verify both the list and live replacement. Preserve any existing user config before testing deletion.
 
 These steps test only the standalone app. There is no system input method to test yet.
+
+## Hammerspoon Cheat Sheet Manual Check
+
+With the Hammerspoon backend loaded and accessibility permissions granted:
+
+1. Press `cmd` + `ctrl` + `alt` + `/`.
+2. Confirm the floating ProofIME cheat sheet opens.
+3. Resize and move the window, close it, reopen it, and confirm the size and position are remembered.
+4. Confirm it includes grouped entries for Logic, Sets, Relations, Arrows, Greek, and Calculus.
+5. Search for `lambda` and confirm `:lambda → λ` is visible.
+6. Search for `le` and confirm `:le → ≤` is visible.
+7. Press `cmd` + `ctrl` + `alt` + `r` and confirm live reload still reports success.
+8. Type `:fa` in a normal text field and confirm it still expands to `∀`.
 
 ## Priority test backlog
 

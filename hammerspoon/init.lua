@@ -4,6 +4,7 @@ local logger = require("logger")
 local buffer = require("buffer")
 local matcher = require("matcher")
 local replacer = require("replacer")
+local cheatsheet = require("cheatsheet")
 local engine = require("engine")
 local keyboard = require("keyboard")
 
@@ -35,6 +36,12 @@ local proofEngine = engine.new({
   log = log,
 })
 
+local symbolCheatSheet = cheatsheet.new({
+  matcher = ruleMatcher,
+  log = log,
+  triggerPrefix = config.triggerPrefix,
+})
+
 local keyboardListener = keyboard.new({
   enabled = config.enabled,
   engine = proofEngine,
@@ -42,6 +49,8 @@ local keyboardListener = keyboard.new({
   ignoredApplications = config.ignoredApplications,
   toggleHotkey = config.toggleHotkey,
   reloadHotkey = config.reloadHotkey,
+  cheatSheetHotkey = config.cheatSheetHotkey,
+  cheatSheet = symbolCheatSheet,
   triggerPrefix = config.triggerPrefix,
   ignoredBundleIDs = config.ignoredBundleIDs,
 })

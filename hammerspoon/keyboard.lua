@@ -26,10 +26,13 @@ function keyboard.new(options)
     ignoredBundleIDs = options.ignoredBundleIDs or {},
     toggleHotkey = options.toggleHotkey,
     reloadHotkey = options.reloadHotkey,
+    cheatSheetHotkey = options.cheatSheetHotkey,
+    cheatSheet = options.cheatSheet,
     triggerPrefix = options.triggerPrefix or "",
     eventtap = nil,
     hotkey = nil,
     reloadHotkeyBinding = nil,
+    cheatSheetHotkeyBinding = nil,
   }
 
   function instance:setEnabled(enabled)
@@ -54,13 +57,14 @@ function keyboard.new(options)
     self.log:i("Rule reload started from keyboard hotkey")
     local result = self.engine:reloadRules()
 
-    if result.ok then
+    if result and result.ok then
       self.engine:clear()
       self.log:i("Rule reload succeeded from keyboard hotkey")
       self.log:i("Rule reload count from keyboard hotkey: " .. tostring(result.ruleCount))
       self:showReloadSuccess(result.ruleCount)
     else
-      self.log:e("Rule reload failed from keyboard hotkey: " .. tostring(result.error))
+      local errorMessage = result and result.error or "unknown reload error"
+      self.log:e("Rule reload failed from keyboard hotkey: " .. tostring(errorMessage))
       self:showReloadFailure()
     end
   end
@@ -150,6 +154,12 @@ function keyboard.new(options)
       end)
     end
 
+    if self.cheatSheetHotkey and self.cheatSheet then
+      self.cheatSheetHotkeyBinding = hs.hotkey.bind(self.cheatSheetHotkey.mods, self.cheatSheetHotkey.key, function()
+        self.cheatSheet:show()
+      end)
+    end
+
     self.log:i("ProofIME keyboard watcher started")
   end
 
@@ -167,6 +177,11 @@ function keyboard.new(options)
     if self.reloadHotkeyBinding then
       self.reloadHotkeyBinding:delete()
       self.reloadHotkeyBinding = nil
+    end
+
+    if self.cheatSheetHotkeyBinding then
+      self.cheatSheetHotkeyBinding:delete()
+      self.cheatSheetHotkeyBinding = nil
     end
   end
 

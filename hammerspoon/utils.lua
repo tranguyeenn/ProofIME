@@ -47,7 +47,13 @@ function utils.fileExists(path)
 end
 
 function utils.readJson(path)
-  return hs.json.read(path)
+  local ok, result, errorMessage = pcall(hs.json.read, path)
+
+  if not ok then
+    return nil, result
+  end
+
+  return result, errorMessage
 end
 
 return utils

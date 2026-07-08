@@ -112,6 +112,8 @@ local function run()
   }
 
   local matcher = require("matcher")
+  local buffer = require("buffer")
+  local engine = require("engine")
 
   local log = {
     d = function() end,
@@ -135,12 +137,6 @@ local function run()
   local function assertContains(actual, expected, message)
     if type(actual) ~= "string" or not actual:find(expected, 1, true) then
       error(message .. ": expected '" .. tostring(actual) .. "' to contain '" .. tostring(expected) .. "'", 2)
-    end
-  end
-
-  local function assertLength(actual, expected, message)
-    if #actual ~= expected then
-      error(message .. ": expected length " .. tostring(expected) .. ", got " .. tostring(#actual), 2)
     end
   end
 
@@ -208,33 +204,31 @@ local function run()
   assertEqual(indexed:findMatch(":le").category, "relations", "legacy category file supplies category metadata")
   assertEqual(indexed:loadRules().ruleCount, 9, "normal load reports active rule count")
 
-  local candidates = indexed:getCandidates(":fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertEqual(candidates[1].trigger, "fa", "exact candidate ranks first")
-  assertEqual(candidates[1].replacement, "∀", "exact candidate returns forall replacement")
-  assertEqual(candidates[1].rankReason, "exact", "exact candidate reports rank reason")
+  local replacedMatch = nil
+  local replacerStub = {
+    isReplacing = function()
+      return false
+    end,
+    replace = function(_, replacementMatch, onComplete)
+      replacedMatch = replacementMatch
+      if onComplete then
+        onComplete()
+      end
+    end,
+  }
 
-  candidates = indexed:getCandidates(":alp", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertEqual(candidates[1].trigger, "alpha", "alpha prefix candidate ranks first")
-  assertEqual(candidates[1].replacement, "α", "alpha prefix candidate returns replacement")
-  assertEqual(candidates[1].category, "greek", "alpha candidate preserves category metadata")
+  local replacementEngine = engine.new({
+    buffer = buffer.new({ maxLength = 32 }),
+    matcher = indexed,
+    replacer = replacerStub,
+    log = log,
+  })
 
-  candidates = indexed:getCandidates(":lamb", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertEqual(candidates[1].trigger, "lambda", "lambda prefix candidate ranks first")
-  assertEqual(candidates[1].replacement, "λ", "lambda prefix candidate returns replacement")
-  assertEqual(candidates[1].rankReason, "trigger-prefix", "lambda candidate reports prefix rank reason")
-
-  candidates = indexed:getCandidates(":universal", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertEqual(candidates[1].trigger, "fa", "keyword candidate finds forall")
-  assertEqual(candidates[1].rankReason, "keyword", "keyword candidate reports rank reason")
-
-  candidates = indexed:getCandidates(":fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertEqual(candidates[1].rankReason, "exact", "exact candidate beats fuzzy candidates")
-
-  candidates = indexed:getCandidates(":a", { triggerPrefix = ":", requireTriggerPrefix = true }, 2)
-  assertLength(candidates, 2, "candidate limit is applied")
-
-  candidates = indexed:getCandidates("fa", { triggerPrefix = ":", requireTriggerPrefix = true }, 5)
-  assertLength(candidates, 0, "candidate search respects required prefix")
+  replacementEngine:handleCharacter(":")
+  replacementEngine:handleCharacter("f")
+  replacementEngine:handleCharacter("a")
+  assertEqual(replacedMatch.replacement, "∀", "direct replacement still occurs")
+  assertEqual(replacedMatch.trigger, ":fa", "direct replacement uses typed prefixed trigger")
 
   state.categories = {
     logic = {
