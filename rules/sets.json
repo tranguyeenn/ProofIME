@@ -1,6 +1,6 @@
 {
   "nat": "ℕ",
-  "integers": "ℤ",
+  "intg": "ℤ",
   "rat": "ℚ",
   "real": "ℝ",
   "compnum": "ℂ",
