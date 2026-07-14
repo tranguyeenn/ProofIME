@@ -1,103 +1,70 @@
 # ProofIME
 
-ProofIME is an experimental macOS typing backend for Telex-style math and proof symbol expansion.
+ProofIME is an experimental macOS helper for typing mathematical logic, set theory, relation, arrow, Greek, and proof symbols from short text triggers.
 
-ProofIME is no longer using InputMethodKit. The failed native IME implementation has been moved to `legacy/imk/` so the repository can pivot toward a smaller Hammerspoon-based backend.
-
-## Direction
-
-The current goal is a Hammerspoon prototype that watches typed text, keeps a small rolling buffer, and expands exact triggers into proof-writing symbols across macOS apps where Hammerspoon can inject keystrokes.
-
-Examples:
+The active user-facing path is the Hammerspoon backend. After it is loaded, typing a trigger such as `:fa` in a supported macOS text field expands it to `∀`.
 
 ```text
-:fa  -> ∀
-:ex  -> ∃
-:imp -> →
-:iff -> ↔
-:and -> ∧
-:or  -> ∨
-:not -> ¬
-:in  -> ∈
-:lambda -> λ
+:fa      -> ∀
+:ex      -> ∃
+:imp     -> →
+:iff     -> ↔
+:and     -> ∧
+:or      -> ∨
+:not     -> ¬
+:in      -> ∈
+:lambda  -> λ
+:qed     -> ∎
 ```
 
-Rules are data-driven through JSON now, with YAML as a planned format once the backend needs richer configuration.
+ProofIME also includes a SwiftUI reference app for experimenting with symbol and proof-template replacement inside one app window. It is not currently a system input method.
 
-## Project Layout
+## Current Status
 
-```text
-rules/
-└── symbols.json
+- Active backend: Hammerspoon scripts in `hammerspoon/`.
+- Active rule data: categorized JSON files in `rules/`.
+- Reference app: SwiftUI project in `ProofIME/` and `ProofIME.xcodeproj`.
+- Legacy native IME material: archived under `legacy/imk/`.
 
-hammerspoon/
-├── init.lua
-├── config.lua
-├── keyboard.lua
-├── engine.lua
-├── buffer.lua
-├── matcher.lua
-├── replacer.lua
-├── cheatsheet.lua
-├── logger.lua
-└── utils.lua
+ProofIME previously explored InputMethodKit, but that implementation is no longer active. Do not expect this repository to install a macOS input source.
 
-legacy/
-└── imk/
-```
+## Quick Start
 
-The older Swift reference app and replacement/rules code are still present in `ProofIME/` and `ProofIMETests/`. They have not been deleted, because they contain reusable replacement behavior and tests.
+1. Install [Hammerspoon](https://www.hammerspoon.org/).
+2. Grant Hammerspoon Accessibility permission in macOS System Settings.
+3. Add this to `~/.hammerspoon/init.lua`, replacing the path if your checkout lives somewhere else:
 
-The requested lowercase `proofime/` directory cannot coexist with the existing `ProofIME/` app directory on the default case-insensitive macOS filesystem, so the Hammerspoon backend lives at root-level `hammerspoon/`, `rules/`, and `legacy/` paths.
+   ```lua
+   package.path = package.path .. ";/Users/trangnguyen/dev/ProofIME/hammerspoon/?.lua"
+   dofile("/Users/trangnguyen/dev/ProofIME/hammerspoon/init.lua")
+   ```
 
-## Run the Hammerspoon Prototype
+4. Reload Hammerspoon.
+5. Type `:fa` in a normal text field. It should become `∀`.
 
-Install Hammerspoon, then load the prototype from `~/.hammerspoon/init.lua`:
+See [docs/INSTALL.md](docs/INSTALL.md) for full setup details.
 
-```lua
-package.path = package.path .. ";/Users/trangnguyen/dev/ProofIME/hammerspoon/?.lua"
-dofile("/Users/trangnguyen/dev/ProofIME/hammerspoon/init.lua")
-```
+## Daily Use
 
-Reload Hammerspoon. Type a trigger such as `:fa`; the backend sends backspaces for the full typed trigger and inserts `∀`.
+- Toggle ProofIME on or off: `cmd` + `alt` + `ctrl` + `p`
+- Reload symbol rules: `cmd` + `ctrl` + `alt` + `r`
+- Open the searchable cheat sheet: `cmd` + `ctrl` + `alt` + `/`
 
-The default toggle hotkey is `ctrl` + `alt` + `cmd` + `p`. Logs are written through Hammerspoon's console under the `ProofIME` logger.
+The default trigger prefix is `:`. This keeps normal words from expanding accidentally, so `:or` expands to `∨` while `or` remains ordinary text.
 
-Press `cmd` + `ctrl` + `alt` + `r` to reload `rules/index.json` and all enabled rule categories without restarting Hammerspoon. An on-screen alert reports `ProofIME: Reloaded X rules` on success. If reload fails, ProofIME keeps the previous working rule set active, shows `ProofIME: Reload failed`, and writes the detailed error to the Hammerspoon log.
+See [docs/USAGE.md](docs/USAGE.md) for common workflows, hotkeys, and supported rule categories.
 
-Press `cmd` + `ctrl` + `alt` + `/` to open the floating ProofIME cheat sheet. It is searchable, resizable, remembers its last size and position, and lists loaded triggers by category, such as `:fa → ∀`, `:in → ∈`, `:le → ≤`, and `:lambda → λ`.
+## Custom Symbols
 
-## Configuration
+Rules are loaded from `rules/index.json`, which enables category files such as `rules/logic.json`, `rules/sets.json`, and `rules/greek.json`.
 
-Symbol rules are split into category files under `rules/`:
+To add a simple local rule:
 
-```text
-rules/
-├── index.json
-├── logic.json
-├── sets.json
-├── relations.json
-├── arrows.json
-├── greek.json
-└── calculus.json
-```
+1. Create or edit a category file under `rules/`.
+2. Add the category name to `rules/index.json`.
+3. Press `cmd` + `ctrl` + `alt` + `r` to reload rules.
 
-`rules/index.json` controls which categories are loaded:
-
-```json
-{
-  "enabled": [
-    "logic",
-    "sets",
-    "relations",
-    "arrows",
-    "greek",
-    "calculus"
-  ]
-}
-```
-
-Remove a category name from `enabled` to disable it, then reload Hammerspoon. To add a new category, create `rules/<category>.json` with trigger-to-symbol mappings and add `<category>` to the enabled list:
+Rules can use either a compact object format:
 
 ```json
 {
@@ -105,34 +72,50 @@ Remove a category name from `enabled` to disable it, then reload Hammerspoon. To
 }
 ```
 
-`rules/symbols.json` is still kept temporarily as a legacy fallback if `rules/index.json` is missing.
+or a metadata-rich array format:
 
-By default, live replacement requires the configured trigger prefix:
-
-```lua
-config.triggerPrefix = ":"
-config.requireTriggerPrefix = true
+```json
+[
+  {
+    "trigger": "fa",
+    "replacement": "∀",
+    "description": "for all",
+    "keywords": ["forall", "universal", "logic"],
+    "category": "logic"
+  }
+]
 ```
 
-With that default, `:le` expands to `≤` and `:or` expands to `∨`, while normal prose such as `rules` and `categories` passes through. Set `config.requireTriggerPrefix = false` to preserve the earlier bare-trigger behavior.
+See [docs/CUSTOMIZATION.md](docs/CUSTOMIZATION.md) before changing shared rule files.
 
-The Hammerspoon backend is split into small modules:
+## SwiftUI Reference App
 
-- `init.lua` wires modules together and starts keyboard listeners.
-- `config.lua` owns runtime knobs such as enabled state, debug logging, buffer length, ignored apps, replacement mode, and hotkeys.
-- `keyboard.lua` adapts Hammerspoon key events into engine input.
-- `engine.lua` coordinates the buffer, matcher, and replacer.
-- `buffer.lua` maintains the rolling typed buffer.
-- `matcher.lua` loads enabled rule categories and finds the longest suffix match.
-- `replacer.lua` sends backspaces and inserts the replacement text.
-- `cheatsheet.lua` renders the searchable hotkey reference from the loaded rules.
-- `logger.lua` wraps Hammerspoon logging.
-- `utils.lua` contains shared string, JSON, and file helpers.
+The Xcode app is useful for trying the replacement engine, proof templates, symbol search, copy/save output, and user config files under `~/Library/Application Support/ProofIME/`.
 
-ProofIME v1 intentionally does not show a caret-positioned candidate popup. Symbol discovery is handled by the cheat sheet while live typing stays limited to exact trigger replacement.
+Open `ProofIME.xcodeproj` in Xcode and run the `ProofIME` scheme. The app works inside its own editor window only; it does not expand text system-wide.
 
-## Legacy IMK Material
+## Repository Map
 
-InputMethodKit-specific source, plist files, install scripts, scheme files, and IMK design notes are quarantined under `legacy/imk/`. They are retained only as historical reference and are not part of the active backend direction.
+```text
+hammerspoon/          Hammerspoon backend modules
+rules/                Categorized symbol rules used by Hammerspoon
+ProofIME/             SwiftUI reference app
+ProofIMETests/        Swift test target
+docs/                 User docs and architecture decisions
+legacy/imk/           Archived InputMethodKit experiment
+scripts/              Development and sanity-check scripts
+```
 
-Do not add a new Xcode input-method target for the Hammerspoon prototype.
+## Troubleshooting
+
+If nothing expands, first check that Hammerspoon has Accessibility permission, ProofIME is enabled, and the target app is not ignored. Terminal apps and password managers are ignored by default.
+
+See [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) for more checks.
+
+## Development
+
+- Architecture notes: [ARCHITECTURE.md](ARCHITECTURE.md)
+- Contribution guide: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Testing notes: [TESTING.md](TESTING.md)
+- Product direction: [PRODUCT_VISION.md](PRODUCT_VISION.md)
+- Roadmap: [ROADMAP.md](ROADMAP.md)
