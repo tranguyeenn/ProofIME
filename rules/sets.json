@@ -1,9 +1,10 @@
 {
-  "nat": "ℕ",
-  "intg": "ℤ",
-  "rat": "ℚ",
-  "real": "ℝ",
-  "comnum": "ℂ",
+  "nn": "ℕ",
+  "zz": "ℤ",
+  "qq": "ℚ",
+  "rr": "ℝ",
+  "cc": "ℂ",
+  "hh": "ℍ",
   "inn": "∈",
   "nin": "∉",
   "suq": "⊆",
@@ -16,5 +17,7 @@
   "setminus": "∖",
   "comp": "∘",
   "cross": "×",
-  "powerset": "℘"
+  "powerset": "℘",
+  "setm": "∖",
+  "aleph": "ℵ"
 }

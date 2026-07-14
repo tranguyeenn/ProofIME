@@ -14,6 +14,55 @@
     "category": "logic"
   },
   {
+    "trigger": "nex",
+    "replacement": "∄",
+    "description": "there does not exist",
+    "keywords": ["not exists", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "bot",
+    "replacement": "⊥",
+    "description": "bottom (false)",
+    "keywords": ["false", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "top",
+    "replacement": "⊤",
+    "description": "top (true)",
+    "keywords": ["true", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "vdash",
+    "replacement": "⊢",
+    "description": "provable",
+    "keywords": ["provable", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "nvdash",
+    "replacement": "⊬",
+    "description": "not provable",
+    "keywords": ["not provable", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "models",
+    "replacement": "⊨",
+    "description": "models",
+    "keywords": ["models", "logic"],
+    "category": "logic"
+  },
+  {
+    "trigger": "nmodels",
+    "replacement": "⊭",
+    "description": "does not model",
+    "keywords": ["does not model", "logic"],
+    "category": "logic"
+  },
+  {
     "trigger": "and",
     "replacement": "∧",
     "description": "logical and",
@@ -47,5 +96,19 @@
   "description": "exclusive or",
   "keywords": ["xor", "exclusive or", "logic", "boolean"],
   "category": "logic"
+  },
+  {
+    "trigger": "otimes",
+    "replacement": "⊗",
+    "description": "tensor product",
+    "keywords": ["tensor product", "logic", "boolean"],
+    "category": "logic"
+  },
+  {
+    "trigger": "oplus",
+    "replacement": "⊕",
+    "description": "direct sum",
+    "keywords": ["direct sum", "logic", "boolean"],
+    "category": "logic"
   }
 ]

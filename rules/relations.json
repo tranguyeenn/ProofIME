@@ -7,6 +7,12 @@
   "sim": "∼",
   "simeq": "≃",
   "prop": "∝",
-  "approx": "≈"
+  "approx": "≈",
+  "rel": "R",
+  "inv": "⁻¹",
+  "prod": "×",
+  "dom": "Dom",
+  "rng": "Rng",
+  "id": "|"
 }
 
