@@ -10,7 +10,7 @@
   "approx": "≈",
   "rel": "R",
   "inv": "⁻¹",
-  "prod": "×",
+  "crprod": "×",
   "dom": "Dom",
   "rng": "Rng",
   "id": "|"
